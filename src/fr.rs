@@ -12,6 +12,12 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use crate::util::{adc, mac, sbb};
 
+use kelvin::{ByteHash, Content, Sink, Source};
+
+extern crate std;
+use std::io;
+use std::io::Read;
+
 /// Represents an element of the scalar field $\mathbb{F}_r$ of the Jubjub elliptic
 /// curve construction.
 // The internal representation of this type is four 64-bit unsigned
@@ -19,6 +25,29 @@ use crate::util::{adc, mac, sbb};
 // Montgomery form; i.e., Fr(a) = aR mod r, with R = 2^256.
 #[derive(Clone, Copy, Eq)]
 pub struct Fr(pub(crate) [u64; 4]);
+
+// Implements logic for storing Scalar inside of kelvin
+impl<H> Content<H> for Fr
+where
+    H: ByteHash,
+{
+    fn persist(&mut self, sink: &mut Sink<H>) -> io::Result<()> {
+        self.to_bytes().persist(sink)
+    }
+
+    fn restore(source: &mut Source<H>) -> io::Result<Self> {
+        let mut bytes = [0u8; 32];
+        // The solution with iterators is a way more messy.
+        // See: https://doc.rust-lang.org/stable/rust-by-example/error/iter_result.html
+        source.read_exact(&mut bytes)?;
+        let might_be_scalar = Fr::from_bytes(&bytes);
+        if might_be_scalar.is_none().unwrap_u8() == 1u8 {
+            return Err(std::io::ErrorKind::InvalidData.into());
+        };
+        // Now it's safe to unwrap.
+        return Ok(might_be_scalar.unwrap());
+    }
+}
 
 impl fmt::Debug for Fr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
