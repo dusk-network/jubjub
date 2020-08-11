@@ -100,10 +100,76 @@ impl Message {
     }
 }
 
+// fn pow_mod(point: &AffinePoint, SecretKey: &Fr, p: &Q) -> Fr {
+//     let zero: Fr::zero();
+//     let one: Fr::one();
+
+//     let mut result: Fr::one();
+//     let mut e     : BigUint = SecretKey.clone();
+//     let mut b     : BigUint = point.clone();
+
+//     while e > zero {
+//         if e & one == one {
+//             result = ( result * b ) % (*p);
+//         }
+//         e = e >> 1;
+//         b = ( b * b ) % (*p);
+//     }
+//     result
+// }
+
+
+// fn inv_mod(num: &Fr) -> Option<Fr> {
+//     let zero: BigInt = Zero::zero();
+//     let mut x: BigInt = Zero::zero();
+//     let mut y: BigInt = One::one();
+//     let mut u: BigInt = One::one();
+//     let mut v: BigInt = Zero::zero();
+
+//     let mut a: Fr = num;
+//     let mut b: Fr = Fr.from_bytes(&Q);
+
+//     while a != zero {
+//         let q = b / a;
+//         let r = b % a;
+//         let m = x - u*q;
+//         let n = y - v*q;
+//         b = a; a = r;
+//         x = u; y = v;
+//         u = m; v = n;
+//     }
+
+//     if b == One::one() {
+//         let result = if x.is_negative() {
+//             (x + modulus.to_bigint().unwrap()).to_biguint().unwrap()
+//         } else {
+//             x.to_biguint().unwrap() % *modulus
+//         };
+//         Some(result)
+//     } else {
+//         None
+//     }
+// }
+
 
 /// By means of Elgamal, this function uses a 
 /// KeyPair to convert a message into Cipher 
 /// text. 
+
+fn inverse_shared(point: PublicKey, scalar: SecretKey) -> Result<AffinePoint> {
+
+    if let Some(pk_point) = point {
+        let sk_scalar = scalar;
+
+        let inv_shared = pk_point * (&Q - sk_scalar);
+        Ok(inv_shared.compress())
+    } else {
+        let msg = "invalid public key".into();
+        let source = None;
+        let err = Error::PublicKey { msg, source };
+        Err(err)
+    }
+}
 
 pub fn encrypt(sk: SecretKey, pk: PublicKey, msg: &Message) -> CipherText {
     let s = (ExtendedPoint::from(pk.0) * sk.0);
