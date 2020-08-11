@@ -40,8 +40,10 @@ mod util;
 mod elgamal;
 
 mod fr;
+mod error;
 pub use bls12_381::Scalar as Fq;
 pub use fr::Fr;
+pub use error::Error;
 
 
 /// A better name than Fr.

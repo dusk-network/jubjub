@@ -31,3 +31,6 @@ default-features = false
 
 [features]
 default = []
+
+[dependencies]
+rand = "^0.7"

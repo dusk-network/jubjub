@@ -1,7 +1,8 @@
 /// This file implements the elgamal encryption 
 /// The implementation uses the JubJub elliptic curve
 
-pub use jubjub::{GENERATOR, Fr, AffinePoint, ExtendedPoint, ExtendedNielsPoint, AffineNielsPoint, Fq};
+use crate::{GENERATOR, AffinePoint, ExtendedPoint, ExtendedNielsPoint, AffineNielsPoint, Fq};
+use crate::fr::Fr;
 use subtle::ConstantTimeEq;
 use crate::Error;
 use rand::Rng;
@@ -115,7 +116,7 @@ pub fn encrypt(sk: SecretKey, pk: PublicKey, msg: &Message) -> CipherText {
 }
 
 pub fn decrypt(sk: SecretKey, cipher: CipherText) -> Message {
-    let s_inv = ExtendedPoint::from(cipher.publicKey.0) * (Fr::from_bytes(&R).unwrap() - sk.0);
+    let s_inv = ExtendedPoint::from(cipher.publicKey.0) * (Fr::from_bytes(&Q).unwrap() - sk.0);
 
     let m = ExtendedPoint::from(cipher.cipher) + s_inv;
     Message(AffinePoint::from(m).to_bytes())
