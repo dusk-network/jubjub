@@ -37,10 +37,12 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 #[macro_use]
 mod util;
+mod elgamal;
 
 mod fr;
 pub use bls12_381::Scalar as Fq;
 pub use fr::Fr;
+
 
 /// A better name than Fr.
 pub type Scalar = Fr;
