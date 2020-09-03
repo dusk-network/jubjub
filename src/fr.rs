@@ -400,6 +400,27 @@ impl Fr {
         Fr::from_bytes_wide(&bytes)
     }
 
+    /// Generate a valid Scalar choosen uniformly using user-
+    /// provided rng.
+    ///
+    /// This scalar is guaranteed to be non-zero
+    ///
+    /// By `rng` we mean any Rng that implements: `Rng` + `CryptoRng`.
+    pub fn random_non_zero<T>(rand: &mut T) -> Fr
+    where
+        T: RngCore + CryptoRng,
+    {
+        let mut bytes = [0u8; 64];
+        rand.fill_bytes(&mut bytes);
+
+        let n = (rand.next_u32() & 63) as usize;
+        let m = rand.next_u32() & 7;
+        let m = (1 << m) as u8;
+        bytes[n] |= m;
+
+        Fr::from_bytes_wide(&bytes)
+    }
+
     /// Computes the square root of this element, if it exists.
     pub fn sqrt(&self) -> CtOption<Self> {
         // Because r = 3 (mod 4)
@@ -1216,4 +1237,37 @@ fn w_naf() {
     let mut buf = [0i8; 31];
     buf.copy_from_slice(&computed[0..31]);
     assert!(&naf3_fr[..] == &computed[..31]);
+}
+
+#[test]
+fn test_random_non_zero() {
+    #[derive(Default)]
+    struct ZeroRng {}
+    impl CryptoRng for ZeroRng {}
+    impl RngCore for ZeroRng {
+        fn next_u32(&mut self) -> u32 {
+            0
+        }
+
+        fn next_u64(&mut self) -> u64 {
+            0
+        }
+
+        fn fill_bytes(&mut self, dest: &mut [u8]) {
+            dest.iter_mut().for_each(|d| *d = 0);
+        }
+
+        fn try_fill_bytes(
+            &mut self,
+            dest: &mut [u8],
+        ) -> Result<(), rand_core::Error> {
+            Ok(self.fill_bytes(dest))
+        }
+    }
+
+    let a = Fr::random_non_zero(&mut ZeroRng::default());
+    let b = Fr::random(&mut ZeroRng::default());
+
+    assert_ne!(Fr::zero(), a);
+    assert_eq!(Fr::zero(), b);
 }

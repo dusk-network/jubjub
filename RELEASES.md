@@ -1,3 +1,7 @@
+# Unreleased
+### Add
+- Implements #45 Non zero Fr random generation.
+
 # 0.3.6
 ### Add
 - Implements #25 Use standard docs.rs documentation engine.
