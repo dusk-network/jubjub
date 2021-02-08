@@ -1,6 +1,6 @@
 # 0.8.1
 ### Change
-- Issue #61 - Wrong bls dependency
+- Issue #61 - Fix on default-features prop of dusk-bls12_381 dependency
 
 # 0.8.0
 ### Change
