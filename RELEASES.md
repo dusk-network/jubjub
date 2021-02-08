@@ -1,3 +1,7 @@
+# 0.8.1
+### Change
+- Issue #61 - Wrong bls dependency
+
 # 0.8.0
 ### Change
 - Update canonical to `v0.5`
