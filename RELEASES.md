@@ -1,3 +1,7 @@
+# 0.8.2
+### Change
+- Issue #64 - Set blake2 to dev-dependency
+
 # 0.8.1
 ### Change
 - Issue #61 - Fix on default-features prop of dusk-bls12_381 dependency
