@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add more tests for wnaf computation [#104]
+- Add a `clippy` action to CI and fix warnings [#91]
 
 ## [0.12.1] - 2022-10-19
 
@@ -182,6 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Initial fork from [`zkcrypto/jubjub`]
 
+[#91]: https://github.com/dusk-network/jubjub/issues/91
 [#104]: https://github.com/dusk-network/jubjub/issues/104
 [#95]: https://github.com/dusk-network/jubjub/issues/95
 [#93]: https://github.com/dusk-network/jubjub/issues/93
