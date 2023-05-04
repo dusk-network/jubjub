@@ -369,7 +369,7 @@ impl Fr {
     /// Converts from an integer represented in little endian
     /// into its (congruent) `Fr` representation.
     pub const fn from_raw(val: [u64; 4]) -> Self {
-        (&Fr(val)).mul(&R2)
+        Fr(val).mul_fr(&R2)
     }
 
     /// Squares this element.
@@ -623,7 +623,7 @@ impl Fr {
         let (r7, _) = adc(r7, carry2, carry);
 
         // Result may be within MODULUS of the correct value
-        (&Fr([r4, r5, r6, r7])).sub(&MODULUS)
+        Fr([r4, r5, r6, r7]).sub_fr(&MODULUS)
     }
 
     /// Multiplies this element by another element
@@ -654,6 +654,12 @@ impl Fr {
         Fr::montgomery_reduce(r0, r1, r2, r3, r4, r5, r6, r7)
     }
 
+    /// Multiplies this element by another element. Proxy for [`fr::mul`].
+    #[inline]
+    pub const fn mul_fr(&self, rhs: &Self) -> Self {
+        self.mul(rhs)
+    }
+
     /// Subtracts another element from this element.
     #[inline]
     pub const fn sub(&self, rhs: &Self) -> Self {
@@ -673,6 +679,12 @@ impl Fr {
         Fr([d0, d1, d2, d3])
     }
 
+    /// Subtracts another element from this element. Proxy for [`fr::sub`].
+    #[inline]
+    pub const fn sub_fr(&self, rhs: &Self) -> Self {
+        self.sub(rhs)
+    }
+
     /// Adds this element to another element.
     #[inline]
     pub const fn add(&self, rhs: &Self) -> Self {
@@ -683,7 +695,13 @@ impl Fr {
 
         // Attempt to subtract the modulus, to ensure the value
         // is smaller than the modulus.
-        (&Fr([d0, d1, d2, d3])).sub(&MODULUS)
+        Fr([d0, d1, d2, d3]).sub_fr(&MODULUS)
+    }
+
+    /// Adds this element to another element. Proxy for [`fr::add`].
+    #[inline]
+    pub const fn add_fr(&self, rhs: &Self) -> Self {
+        self.add(rhs)
     }
 
     /// Negates this element.
@@ -705,6 +723,13 @@ impl Fr {
 
         Fr([d0 & mask, d1 & mask, d2 & mask, d3 & mask])
     }
+
+    /// Negates this element. Proxy for [`fr::neg`].
+    #[inline]
+    pub const fn neg_fr(&self) -> Self {
+        self.neg()
+    }
+
     /// Reduces bit representation of numbers, such that
     /// they can be evaluated in terms of the least significant bit.
     pub fn reduce(&self) -> Self {
@@ -764,7 +789,7 @@ impl Fr {
             if !k.is_even() {
                 let ki = k.mods_2_pow_k(width);
                 res[i] = ki;
-                k = k - Fr::from(ki);
+                k -= Fr::from(ki);
             } else {
                 res[i] = 0i8;
             };
