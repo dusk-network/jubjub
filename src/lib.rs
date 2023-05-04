@@ -215,8 +215,8 @@ impl ConstantTimeEq for JubJubExtended {
         //      (yz'z = y'z'z)
         // as z and z' are always nonzero.
 
-        (&self.x * &other.z).ct_eq(&(&other.x * &self.z))
-            & (&self.y * &other.z).ct_eq(&(&other.y * &self.z))
+        (self.x * other.z).ct_eq(&(other.x * self.z))
+            & (self.y * other.z).ct_eq(&(other.y * self.z))
     }
 }
 
@@ -274,8 +274,8 @@ impl<'a> From<&'a JubJubExtended> for JubJubAffine {
         let zinv = extended.z.invert().unwrap();
 
         JubJubAffine {
-            x: extended.x * &zinv,
-            y: extended.y * &zinv,
+            x: extended.x * zinv,
+            y: extended.y * zinv,
         }
     }
 }
@@ -329,7 +329,7 @@ impl AffineNielsPoint {
             .skip(4)
         {
             acc = acc.double();
-            acc += AffineNielsPoint::conditional_select(&zero, &self, bit);
+            acc += AffineNielsPoint::conditional_select(&zero, self, bit);
         }
 
         acc
@@ -433,7 +433,7 @@ impl ExtendedNielsPoint {
             .skip(4)
         {
             acc = acc.double();
-            acc += ExtendedNielsPoint::conditional_select(&zero, &self, bit);
+            acc += ExtendedNielsPoint::conditional_select(&zero, self, bit);
         }
 
         acc
@@ -495,7 +495,7 @@ impl Serializable<32> for JubJubAffine {
     /// serialization.
     /// See: <https://zips.z.cash/zip-0216> for more details.
     fn from_bytes(b: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        let mut b = b.clone();
+        let mut b = *b;
 
         // Grab the sign bit from the representation
         let sign = b[31] >> 7;
@@ -521,7 +521,7 @@ impl Serializable<32> for JubJubAffine {
 
         Option::from(
             ((y2 - BlsScalar::one())
-                * ((BlsScalar::one() + EDWARDS_D * &y2)
+                * ((BlsScalar::one() + EDWARDS_D * y2)
                     .invert()
                     .unwrap_or(BlsScalar::zero())))
             .sqrt()
@@ -718,10 +718,10 @@ impl JubJubExtended {
     /// for use in multiple additions.
     pub fn to_niels(&self) -> ExtendedNielsPoint {
         ExtendedNielsPoint {
-            y_plus_x: &self.y + &self.x,
-            y_minus_x: &self.y - &self.x,
+            y_plus_x: self.y + self.x,
+            y_minus_x: self.y - self.x,
             z: self.z,
-            t2d: &self.t1 * &self.t2 * EDWARDS_D2,
+            t2d: self.t1 * self.t2 * EDWARDS_D2,
         }
     }
 
@@ -817,17 +817,17 @@ impl JubJubExtended {
         let xx = self.x.square();
         let yy = self.y.square();
         let zz2 = self.z.square().double();
-        let xy2 = (&self.x + &self.y).square();
-        let yy_plus_xx = &yy + &xx;
-        let yy_minus_xx = &yy - &xx;
+        let xy2 = (self.x + self.y).square();
+        let yy_plus_xx = yy + xx;
+        let yy_minus_xx = yy - xx;
 
         // The remaining arithmetic is exactly the process of converting
         // from a completed point to an extended point.
         CompletedPoint {
-            x: &xy2 - &yy_plus_xx,
+            x: xy2 - yy_plus_xx,
             y: yy_plus_xx,
             z: yy_minus_xx,
-            t: &zz2 - &yy_minus_xx,
+            t: zz2 - yy_minus_xx,
         }
         .into_extended()
     }
@@ -882,18 +882,18 @@ impl<'a, 'b> Add<&'b ExtendedNielsPoint> for &'a JubJubExtended {
         // Z3 = F * G
         // T3 = E * H
 
-        let a = (&self.y - &self.x) * &other.y_minus_x;
-        let b = (&self.y + &self.x) * &other.y_plus_x;
-        let c = &self.t1 * &self.t2 * &other.t2d;
-        let d = (&self.z * &other.z).double();
+        let a = (self.y - self.x) * other.y_minus_x;
+        let b = (self.y + self.x) * other.y_plus_x;
+        let c = self.t1 * self.t2 * other.t2d;
+        let d = (self.z * other.z).double();
 
         // The remaining arithmetic is exactly the process of converting
         // from a completed point to an extended point.
         CompletedPoint {
-            x: &b - &a,
-            y: &b + &a,
-            z: &d + &c,
-            t: &d - &c,
+            x: b - a,
+            y: b + a,
+            z: d + c,
+            t: d - c,
         }
         .into_extended()
     }
@@ -904,16 +904,16 @@ impl<'a, 'b> Sub<&'b ExtendedNielsPoint> for &'a JubJubExtended {
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn sub(self, other: &'b ExtendedNielsPoint) -> JubJubExtended {
-        let a = (&self.y - &self.x) * &other.y_plus_x;
-        let b = (&self.y + &self.x) * &other.y_minus_x;
-        let c = &self.t1 * &self.t2 * &other.t2d;
-        let d = (&self.z * &other.z).double();
+        let a = (self.y - self.x) * other.y_plus_x;
+        let b = (self.y + self.x) * other.y_minus_x;
+        let c = self.t1 * self.t2 * other.t2d;
+        let d = (self.z * other.z).double();
 
         CompletedPoint {
-            x: &b - &a,
-            y: &b + &a,
-            z: &d - &c,
-            t: &d + &c,
+            x: b - a,
+            y: b + a,
+            z: d - c,
+            t: d + c,
         }
         .into_extended()
     }
@@ -930,18 +930,18 @@ impl<'a, 'b> Add<&'b AffineNielsPoint> for &'a JubJubExtended {
         // except we can assume that `other.z` is one, so that we perform
         // 7 multiplications.
 
-        let a = (&self.y - &self.x) * &other.y_minus_x;
-        let b = (&self.y + &self.x) * &other.y_plus_x;
-        let c = &self.t1 * &self.t2 * &other.t2d;
+        let a = (self.y - self.x) * other.y_minus_x;
+        let b = (self.y + self.x) * other.y_plus_x;
+        let c = self.t1 * self.t2 * other.t2d;
         let d = self.z.double();
 
         // The remaining arithmetic is exactly the process of converting
         // from a completed point to an extended point.
         CompletedPoint {
-            x: &b - &a,
-            y: &b + &a,
-            z: &d + &c,
-            t: &d - &c,
+            x: b - a,
+            y: b + a,
+            z: d + c,
+            t: d - c,
         }
         .into_extended()
     }
@@ -952,16 +952,16 @@ impl<'a, 'b> Sub<&'b AffineNielsPoint> for &'a JubJubExtended {
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn sub(self, other: &'b AffineNielsPoint) -> JubJubExtended {
-        let a = (&self.y - &self.x) * &other.y_plus_x;
-        let b = (&self.y + &self.x) * &other.y_minus_x;
-        let c = &self.t1 * &self.t2 * &other.t2d;
+        let a = (self.y - self.x) * other.y_plus_x;
+        let b = (self.y + self.x) * other.y_minus_x;
+        let c = self.t1 * self.t2 * other.t2d;
         let d = self.z.double();
 
         CompletedPoint {
-            x: &b - &a,
-            y: &b + &a,
-            z: &d - &c,
-            t: &d + &c,
+            x: b - a,
+            y: b + a,
+            z: d - c,
+            t: d + c,
         }
         .into_extended()
     }
@@ -1031,9 +1031,9 @@ impl CompletedPoint {
     #[inline]
     fn into_extended(self) -> JubJubExtended {
         JubJubExtended {
-            x: &self.x * &self.t,
-            y: &self.y * &self.z,
-            z: &self.z * &self.t,
+            x: self.x * self.t,
+            y: self.y * self.z,
+            z: self.z * self.t,
             t1: self.x,
             t2: self.y,
         }
@@ -1061,9 +1061,9 @@ impl Default for JubJubExtended {
 /// slice.
 ///
 /// This costs 5 multiplications per element, and a field inversion.
-pub fn batch_normalize<'a>(
-    y: &'a mut [JubJubExtended],
-) -> impl Iterator<Item = JubJubAffine> + 'a {
+pub fn batch_normalize(
+    y: &mut [JubJubExtended],
+) -> impl Iterator<Item = JubJubAffine> + '_ {
     let mut acc = BlsScalar::one();
     for p in y.iter_mut() {
         // We use the `t1` field of `JubJubExtended` to store the product
