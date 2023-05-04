@@ -140,13 +140,28 @@ impl ElgamalCipher {
     pub fn decrypt(&self, secret: &JubJubScalar) -> JubJubExtended {
         self.delta - self.gamma * secret
     }
+
+    /// Add one Elgamal cipher to another.
+    pub fn add_ec(self, other: &ElgamalCipher) -> Self {
+        ElgamalCipher::new(self.gamma + other.gamma, self.delta + other.delta)
+    }
+
+    /// Subtract one Elgamal cipher from another.
+    pub fn sub_ec(self, other: &ElgamalCipher) -> Self {
+        ElgamalCipher::new(self.gamma - other.gamma, self.delta - other.delta)
+    }
+
+    /// Multiply an Elgamal cipher with a JubJub scalar.
+    pub fn mul_jjs(self, rhs: &JubJubScalar) -> ElgamalCipher {
+        ElgamalCipher::new(self.gamma * rhs, self.delta * rhs)
+    }
 }
 
 impl Add for &ElgamalCipher {
     type Output = ElgamalCipher;
 
     fn add(self, other: &ElgamalCipher) -> ElgamalCipher {
-        ElgamalCipher::new(self.gamma + other.gamma, self.delta + other.delta)
+        self.add_ec(other)
     }
 }
 
@@ -154,7 +169,7 @@ impl Add for ElgamalCipher {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        &self + &other
+        self.add_ec(&other)
     }
 }
 
@@ -168,7 +183,7 @@ impl Sub for &ElgamalCipher {
     type Output = ElgamalCipher;
 
     fn sub(self, other: &ElgamalCipher) -> ElgamalCipher {
-        ElgamalCipher::new(self.gamma - other.gamma, self.delta - other.delta)
+        self.sub_ec(other)
     }
 }
 
@@ -176,7 +191,7 @@ impl Sub for ElgamalCipher {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        &self - &other
+        self.sub_ec(&other)
     }
 }
 
@@ -190,7 +205,7 @@ impl Mul<&JubJubScalar> for &ElgamalCipher {
     type Output = ElgamalCipher;
 
     fn mul(self, rhs: &JubJubScalar) -> ElgamalCipher {
-        ElgamalCipher::new(self.gamma * rhs, self.delta * rhs)
+        self.mul_jjs(rhs)
     }
 }
 
@@ -198,7 +213,7 @@ impl Mul<JubJubScalar> for &ElgamalCipher {
     type Output = ElgamalCipher;
 
     fn mul(self, rhs: JubJubScalar) -> ElgamalCipher {
-        self * &rhs
+        self.mul_jjs(&rhs)
     }
 }
 
