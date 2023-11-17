@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add random scalar generator `UniScalarRng` for uniformly distributed scalar generation [#121]
+
+### Remove
+- Remove dusk's `random` scalar implementation in favor of the `random` implementation that is part of the `Field` trait [#121]
+
 ## [0.13.1] - 2023-10-11
 
 ### Changed
@@ -198,6 +205,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Initial fork from [`zkcrypto/jubjub`]
 
+<!-- Issues -->
+[#121]: https://github.com/dusk-network/jubjub/issues/121
 [#115]: https://github.com/dusk-network/jubjub/issues/115
 [#109]: https://github.com/dusk-network/jubjub/issues/109
 [#104]: https://github.com/dusk-network/jubjub/issues/104
@@ -215,6 +224,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#31]: https://github.com/dusk-network/jubjub/issues/31
 [#25]: https://github.com/dusk-network/jubjub/issues/25
 
+<!-- Versions -->
 [Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.13.1...HEAD
 [0.13.1]: https://github.com/dusk-network/jubjub/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/dusk-network/jubjub/compare/v0.12.1...v0.13.0

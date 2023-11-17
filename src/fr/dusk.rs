@@ -4,35 +4,125 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use core::convert::TryInto;
-
-use rand_core::RngCore;
-
-use crate::util::sbb;
-
 use core::cmp::{Ord, Ordering, PartialOrd};
+use core::convert::TryInto;
 use core::ops::{Index, IndexMut};
-use dusk_bls12_381::BlsScalar;
 
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
+use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 use super::{Fr, MODULUS, R2};
+use crate::util::sbb;
 
-impl Fr {
-    /// Generate a valid Scalar choosen uniformly using user-
-    /// provided rng.
-    ///
-    /// By `rng` we mean any Rng that implements: `Rng` + `CryptoRng`.
-    pub fn random<T>(rand: &mut T) -> Fr
-    where
-        T: RngCore,
-    {
-        let mut bytes = [0u8; 64];
-        rand.fill_bytes(&mut bytes);
+/// Random number generator for generating scalars that are uniformly
+/// distributed over the entire field of scalars.
+///
+/// Because scalars take 251 bits for encoding it is difficult to generate
+/// random bit-pattern that ensures to encode a valid scalar.
+/// Wrapping the values that are higher than [`MODULUS`], as done in
+/// [`Self::random`], results in hitting some values more than others, whereas
+/// zeroing out the highest two bits will eliminate some values from the
+/// possible results.
+///
+/// This function achieves a uniform distribution of scalars by using rejection
+/// sampling: random bit-patterns are generated until a valid scalar is found.
+/// The scalar creation is not constant time but that shouldn't be a concern
+/// since no information about the scalar can be gained by knowing the time of
+/// its generation.
+///
+/// ## Example
+///
+/// ```
+/// use rand::rngs::{StdRng, OsRng};
+/// use rand::SeedableRng;
+/// use dusk_jubjub::{JubJubScalar, UniScalarRng};
+/// use ff::Field;
+///
+/// // using a seedable random number generator
+/// let mut rng: UniScalarRng<StdRng> = UniScalarRng::seed_from_u64(0x42);
+/// let _scalar = JubJubScalar::random(rng);
+///
+/// // using randomness derived from the os
+/// let mut rng = UniScalarRng::<OsRng>::default();
+/// let _ = JubJubScalar::random(rng);
+/// ```
+#[derive(Clone, Copy, Debug, Default)]
+pub struct UniScalarRng<R>(R);
 
-        Fr::from_bytes_wide(&bytes)
+impl<R> CryptoRng for UniScalarRng<R> where R: CryptoRng {}
+
+impl<R> RngCore for UniScalarRng<R>
+where
+    R: RngCore,
+{
+    fn next_u32(&mut self) -> u32 {
+        self.0.next_u32()
     }
 
+    fn next_u64(&mut self) -> u64 {
+        self.0.next_u64()
+    }
+
+    // We use rejection sampling to generate a valid scalar.
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        if dest.len() < 32 {
+            panic!("buffer too small to generate uniformly distributed random scalar");
+        }
+
+        // Loop until we find a canonical scalar.
+        // As long as the random number generator is implemented properly, this
+        // loop will terminate.
+        let mut scalar = [0u64; 4];
+        loop {
+            for integer in scalar.iter_mut() {
+                *integer = self.0.next_u64();
+            }
+
+            // Check that the generated potential scalar is smaller than MODULUS
+            let bx = scalar[3] <= MODULUS.0[3];
+            let b1 = bx && MODULUS.0[0] > scalar[0];
+            let b2 = bx && (MODULUS.0[1] + b1 as u64) > scalar[1];
+            let b3 = bx && (MODULUS.0[2] + b2 as u64) > scalar[2];
+            let b4 = bx && (MODULUS.0[3] + b3 as u64) > scalar[3];
+
+            if b4 {
+                // Copy the generated random scalar in the first 32 bytes of the
+                // destination slice (scalars are stored in little endian).
+                for (i, integer) in scalar.iter().enumerate() {
+                    let bytes = integer.to_le_bytes();
+                    dest[i * 8..(i + 1) * 8].copy_from_slice(&bytes);
+                }
+
+                // Zero the remaining bytes (if any).
+                if dest.len() > 32 {
+                    dest[32..].fill(0);
+                }
+                return;
+            }
+        }
+    }
+
+    fn try_fill_bytes(
+        &mut self,
+        dest: &mut [u8],
+    ) -> Result<(), rand_core::Error> {
+        self.0.try_fill_bytes(dest)
+    }
+}
+
+impl<R> SeedableRng for UniScalarRng<R>
+where
+    R: SeedableRng,
+{
+    type Seed = <R as SeedableRng>::Seed;
+
+    fn from_seed(seed: Self::Seed) -> Self {
+        Self(R::from_seed(seed))
+    }
+}
+
+impl Fr {
     /// SHR impl: shifts bits n times, equivalent to division by 2^n.
     #[inline]
     pub fn divn(&mut self, mut n: u32) {
@@ -302,4 +392,31 @@ fn w_naf_2() {
         }
     });
     assert_eq!(scalar, recomputed);
+}
+
+#[test]
+fn test_uni_rng() {
+    use rand::rngs::StdRng;
+    let mut rng: UniScalarRng<StdRng> = UniScalarRng::seed_from_u64(0xbeef);
+
+    let mut buf32 = [0u8; 32];
+    let mut buf64 = [0u8; 64];
+
+    for _ in 0..100000 {
+        // fill an array of 64 bytes with our random scalar generator
+        rng.fill_bytes(&mut buf64);
+
+        // copy the first 32 bytes into another buffer and check that these
+        // bytes are the canonical encoding of a scalar
+        buf32.copy_from_slice(&buf64[..32]);
+        let scalar1: Option<Fr> = Fr::from_bytes(&buf32).into();
+        assert!(scalar1.is_some());
+
+        // create a second scalar from the 64 bytes wide array and check that it
+        // generates the same scalar as generated from the 32 bytes wide
+        // array
+        let scalar2: Fr = Fr::from_bytes_wide(&buf64);
+        let scalar1 = scalar1.unwrap();
+        assert_eq!(scalar1, scalar2);
+    }
 }

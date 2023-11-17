@@ -2,7 +2,7 @@
 //! $\mathbb{F}_r$ where `r =
 //! 0x0e7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb7`
 
-mod dusk;
+pub(crate) mod dusk;
 
 use core::convert::TryInto;
 use core::fmt;

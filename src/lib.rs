@@ -67,6 +67,7 @@ pub use dusk::{
     dhke, GENERATOR, GENERATOR_EXTENDED, GENERATOR_NUMS,
     GENERATOR_NUMS_EXTENDED,
 };
+pub use fr::dusk::UniScalarRng;
 /// An alias for [`AffinePoint`]
 pub type JubJubAffine = AffinePoint;
 /// An alias for [`ExtendedPoint`]
