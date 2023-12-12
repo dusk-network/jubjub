@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2023-12-13
+
 ### Removed
 
 - Remove dusk's implementation of `Fr::random` [#127]
@@ -233,7 +235,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#25]: https://github.com/dusk-network/jubjub/issues/25
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/dusk-network/jubjub/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/dusk-network/jubjub/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/dusk-network/jubjub/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/dusk-network/jubjub/compare/v0.12.0...v0.12.1
