@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `from_var_bytes` to fr [#126] and refactor and rename to `hash_to_scalar` [#129]
 - Add `hash_to_point` to `ExtendedPoint` [#129]
 
+## Changed
+
+- Update dependency `bls12_381` to 0.13
+
 ## [0.13.1] - 2023-10-11
 
 ### Changed
