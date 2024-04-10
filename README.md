@@ -7,10 +7,24 @@
 
 This is a pure Rust implementation of the Jubjub elliptic curve group and its associated fields.
 
+> :warning: THIS CRATE IS A FORK OF [https://github.com/zkcrypto/jubjub](https://github.com/zkcrypto/jubjub/): The Dusk team has added a variety of features for its own use-case on the top of the original library. You SHOULD NOT use this library unless you need a specific feature that we've implemented and is not available in the original.
+
 * **This implementation has not been reviewed or audited. Use at your own risk.**
 * This implementation targets Rust `1.56` or later.
 * All operations are constant time unless explicitly noted.
 * This implementation does not require the Rust standard library.
+
+## Dusk Additions
+
+- Diffie-Hellman Key Exchange (DHKE) for Jubjub curves for secure shared secrets.
+- Exposes fixed generator points.
+- Enhance serialization for Jubjub affine points.
+- Robust hashing mechanism to map bytes to a point on the Jubjub curve through rejection sampling
+- Bitwise shifts and reductions for arithmatic within the scalar field.
+- wnaf implementation for scalar multiplication.
+- Comparative and ordinal operations for scalars, for sorting and equality checks.
+- Scalar generation from bytes using BLAKE2b hashing.
+
 
 ## [Documentation](https://docs.rs/dusk-jubjub/)
 
