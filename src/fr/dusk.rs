@@ -14,6 +14,9 @@ use dusk_bytes::{Error as BytesError, Serializable};
 use super::{Fr, MODULUS, R2};
 use crate::util::sbb;
 
+#[cfg(feature = "zeroize")]
+impl zeroize::DefaultIsZeroes for Fr {}
+
 impl Fr {
     /// Creates a `Fr` from arbitrary bytes by hashing the input with BLAKE2b
     /// into a 512-bits number, and then converting the number into its scalar
@@ -352,4 +355,14 @@ mod fuzz {
             is_scalar_in_range(&scalar)
         }
     }
+}
+
+#[cfg(feature = "zeroize")]
+#[test]
+fn test_zeroize() {
+    use zeroize::Zeroize;
+
+    let mut scalar = Fr::one();
+    scalar.zeroize();
+    assert_eq!(scalar, Fr::zero());
 }

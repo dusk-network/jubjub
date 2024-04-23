@@ -16,6 +16,12 @@ use dusk_bytes::{Error as BytesError, Serializable};
 
 use crate::{Fr, JubJubAffine, JubJubExtended, EDWARDS_D};
 
+#[cfg(feature = "zeroize")]
+impl zeroize::DefaultIsZeroes for JubJubAffine {}
+
+#[cfg(feature = "zeroize")]
+impl zeroize::DefaultIsZeroes for JubJubExtended {}
+
 /// Compute a shared secret `secret · public` using DHKE protocol
 pub fn dhke(secret: &Fr, public: &JubJubExtended) -> JubJubAffine {
     public.mul(secret).into()
@@ -340,4 +346,18 @@ mod fuzz {
             point.is_on_curve_vartime() && point.is_prime_order().into()
         }
     }
+}
+
+#[cfg(feature = "zeroize")]
+#[test]
+fn test_zeroize() {
+    use zeroize::Zeroize;
+
+    let mut point: JubJubAffine = GENERATOR;
+    point.zeroize();
+    assert!(bool::from(point.is_identity()));
+
+    let mut point: JubJubExtended = GENERATOR_EXTENDED;
+    point.zeroize();
+    assert!(bool::from(point.is_identity()));
 }
