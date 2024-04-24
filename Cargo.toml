@@ -61,6 +61,11 @@ version = "0.1"
 version = "0.7"
 optional = true
 default-features = false
+
+[dependencies.zeroize]
+version = "1"
+optional = true
+default-features = false
 # End Dusk dependendencies
 
 [dev-dependencies]
