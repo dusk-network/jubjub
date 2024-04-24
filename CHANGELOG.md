@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `Zeroize` trait for `JubJubScalar`, `JubJubAffine` and `JubJubExtended` [#135]
 - Add `zeroize` optional dependency [#135]
+- Add `is_on_curve` check for `JubJubAffine` and `JubJubExtended` [#137]
 
 ## [0.14.0] - 2023-12-13
 
@@ -219,6 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#137]: https://github.com/dusk-network/jubjub/issues/137
 [#135]: https://github.com/dusk-network/jubjub/issues/135
 [#129]: https://github.com/dusk-network/jubjub/issues/129
 [#127]: https://github.com/dusk-network/jubjub/issues/127

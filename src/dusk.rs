@@ -14,7 +14,7 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 pub use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
 
-use crate::{Fr, JubJubAffine, JubJubExtended, EDWARDS_D};
+use crate::{Fq, Fr, JubJubAffine, JubJubExtended, EDWARDS_D};
 
 #[cfg(feature = "zeroize")]
 impl zeroize::DefaultIsZeroes for JubJubAffine {}
@@ -161,6 +161,17 @@ impl Serializable<32> for JubJubAffine {
     }
 }
 
+impl JubJubAffine {
+    /// Returns true if this point is on the curve. This should always return
+    /// true unless an "unchecked" API was used.
+    pub fn is_on_curve(&self) -> Choice {
+        // v^2 - u^2 - d * u^2 * v^2 ?= 1
+        let u2 = self.u.square();
+        let v2 = self.v.square();
+        (v2 - u2 - EDWARDS_D * u2 * v2).ct_eq(&Fq::one())
+    }
+}
+
 impl JubJubExtended {
     /// Constructs an extended point (with `Z = 1`) from
     /// an affine point using the map `(x, y) => (x, y, 1, x, y)`.
@@ -261,6 +272,18 @@ impl JubJubExtended {
             counter += 1
         }
     }
+
+    /// Returns true if this point is on the curve. This should always return
+    /// true unless an "unchecked" API was used.
+    pub fn is_on_curve(&self) -> Choice {
+        let affine = JubJubAffine::from(*self);
+
+        (((self.z != Fq::zero())
+            && affine.is_on_curve().into()
+            && (affine.u * affine.v * self.z == self.t1 * self.t2))
+            as u8)
+            .into()
+    }
 }
 
 #[test]
@@ -300,6 +323,40 @@ fn test_affine_point_generator_nums_is_not_identity() {
         JubJubExtended::from(GENERATOR_NUMS.mul_by_cofactor()),
         JubJubExtended::identity()
     );
+}
+
+#[test]
+fn test_is_on_curve() {
+    assert!(bool::from(JubJubAffine::identity().is_on_curve()));
+    assert!(bool::from(GENERATOR.is_on_curve()));
+    assert!(bool::from(GENERATOR_NUMS.is_on_curve()));
+    assert!(bool::from(JubJubExtended::identity().is_on_curve()));
+    assert!(bool::from(GENERATOR_EXTENDED.is_on_curve()));
+    assert!(bool::from(GENERATOR_NUMS_EXTENDED.is_on_curve()));
+
+    let mut rng = rand_core::OsRng;
+    for _ in 0..1000 {
+        let affine = GENERATOR * &Fr::random(&mut rng);
+        assert!(bool::from(affine.is_on_curve()));
+
+        let extended = GENERATOR_EXTENDED * &Fr::random(&mut rng);
+        assert!(bool::from(extended.is_on_curve()));
+    }
+
+    let affine_invalid = JubJubAffine::from_raw_unchecked(
+        BlsScalar::from(42),
+        BlsScalar::from(42),
+    );
+    assert!(!bool::from(affine_invalid.is_on_curve()));
+
+    let extended_invalid = JubJubExtended::from_raw_unchecked(
+        BlsScalar::from(42),
+        BlsScalar::from(42),
+        BlsScalar::from(42),
+        BlsScalar::from(21),
+        BlsScalar::from(2),
+    );
+    assert!(!bool::from(extended_invalid.is_on_curve()));
 }
 
 #[test]
