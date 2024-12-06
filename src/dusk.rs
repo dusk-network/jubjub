@@ -7,6 +7,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+#[cfg(feature = "serde")]
+mod serde_support;
+
 use core::ops::Mul;
 use ff::Field;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};

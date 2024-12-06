@@ -19,7 +19,7 @@ jobs:
     name: Nightly tests std
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: --features=zeroize
+      test_flags: --features=zeroize,serde
 
   test_nightly_no_std:
     name: Nightly tests no_std

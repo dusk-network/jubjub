@@ -275,6 +275,48 @@ impl Serializable<32> for Fr {
     }
 }
 
+#[cfg(feature = "serde")]
+mod serde_support {
+    extern crate alloc;
+
+    use alloc::string::{String, ToString};
+
+    use dusk_bytes::Serializable;
+    use serde::de::Error;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    use super::Fr;
+
+    impl Serialize for Fr {
+        fn serialize<S: Serializer>(
+            &self,
+            serializer: S,
+        ) -> Result<S::Ok, S::Error> {
+            let s = hex::encode(self.to_bytes());
+            serializer.serialize_str(&s)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Fr {
+        fn deserialize<D: Deserializer<'de>>(
+            deserializer: D,
+        ) -> Result<Self, D::Error> {
+            let s = String::deserialize(deserializer)?;
+            let decoded = hex::decode(s).map_err(Error::custom)?;
+            let decoded_len = decoded.len();
+            let bytes: [u8; Self::SIZE] = decoded.try_into().map_err(|_| {
+                Error::invalid_length(
+                    decoded_len,
+                    &Self::SIZE.to_string().as_str(),
+                )
+            })?;
+            Fr::from_bytes(&bytes)
+                .into_option()
+                .ok_or(Error::custom("Failed to deserialize Fr: invalid Fr"))
+        }
+    }
+}
+
 #[test]
 fn w_naf_3() {
     let scalar = Fr::from(1122334455u64);
@@ -365,4 +407,34 @@ fn test_zeroize() {
     let mut scalar = Fr::one();
     scalar.zeroize();
     assert_eq!(scalar, Fr::zero());
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fr() {
+    use ff::Field;
+    use rand::rngs::StdRng;
+    use rand::SeedableRng;
+
+    let mut rng = StdRng::seed_from_u64(0xdead);
+    let fr = Fr::random(&mut rng);
+    let ser = serde_json::to_string(&fr).unwrap();
+    let deser = serde_json::from_str(&ser).unwrap();
+    assert_eq!(fr, deser);
+
+    // Should error when the encoding is wrong
+    let wrong_encoded = "wrong-encoded";
+    let fr: Result<Fr, _> = serde_json::from_str(&wrong_encoded);
+    assert!(fr.is_err());
+
+    // Should error when the input is too long
+    let length_33_enc = "\"e4ab9de40283a85d6ea0cd0120500697d8b01c71b7b4b520292252d20937000631\"";
+    let fr: Result<Fr, _> = serde_json::from_str(&length_33_enc);
+    assert!(fr.is_err());
+
+    // Should error when the input is too short
+    let length_31_enc =
+        "\"1751c37a1dca7aa4c048fcc6177194243edc3637bae042e167e4285945e046\"";
+    let fr: Result<Fr, _> = serde_json::from_str(&length_31_enc);
+    assert!(fr.is_err());
 }
