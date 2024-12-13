@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add serde `Serialize` and `Deserialize` implementations for `Fr`, `AffinePoint` and `ExtendedPoint` [#143]
+- Add `serde`, `hex` and `serde_json` optional dependencies [#143]
+- Add `serde` feature [#143]
+
 ## [0.14.1] - 2024-04-24
 
 ### Added
@@ -222,6 +228,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#143]: https://github.com/dusk-network/jubjub/issues/143
 [#137]: https://github.com/dusk-network/jubjub/issues/137
 [#135]: https://github.com/dusk-network/jubjub/issues/135
 [#129]: https://github.com/dusk-network/jubjub/issues/129
@@ -243,6 +250,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#32]: https://github.com/dusk-network/jubjub/issues/32
 [#31]: https://github.com/dusk-network/jubjub/issues/31
 [#25]: https://github.com/dusk-network/jubjub/issues/25
+
 
 <!-- VERSIONS -->
 [Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.14.1...HEAD
