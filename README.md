@@ -24,6 +24,7 @@ This is a pure Rust implementation of the Jubjub elliptic curve group and its as
 - wnaf implementation for scalar multiplication.
 - Comparative and ordinal operations for scalars, for sorting and equality checks.
 - Scalar generation from bytes using BLAKE2b hashing.
+- Provide `serde` feature for opinionated de- & serialization of `Fr`, `AffinePoint` and `ExtendedPoint` types as hex-encoded bytes.
 
 
 ## [Documentation](https://docs.rs/dusk-jubjub/)
