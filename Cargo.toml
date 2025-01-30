@@ -25,7 +25,7 @@ version = "1"
 default-features = false
 
 [dependencies.dusk-bls12_381]
-version = "0.13"
+version = "0.14"
 default-features = false
 
 [dependencies.ff]
