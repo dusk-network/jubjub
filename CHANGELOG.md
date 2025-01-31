@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.3] - 2025-01-31
+
 ### Changed
 
 - Update dependency `dusk-bls12_381` to 0.14
@@ -259,7 +261,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.14.2...HEAD
+[Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.14.3...HEAD
+[0.14.3]: https://github.com/dusk-network/jubjub/compare/v0.14.2...v0.14.3
 [0.14.2]: https://github.com/dusk-network/jubjub/compare/v0.14.1...v0.14.2
 [0.14.1]: https://github.com/dusk-network/jubjub/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/dusk-network/jubjub/compare/v0.13.1...v0.14.0
