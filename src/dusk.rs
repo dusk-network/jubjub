@@ -276,6 +276,67 @@ impl JubJubExtended {
         }
     }
 
+    /// Method that maps a [`u64`] input value to a [`JubJubExtended`] point
+    /// of the curve. This is a bidirectional operation, meaning
+    /// that the operation can be reverted by using the 'unmap_from_point()'
+    /// function.
+    ///
+    /// This is a probabilistic method, meaning that trying to find a correct
+    /// map can require several tries, until finding a real point on the curve,
+    /// that lies also on the correct subgroup.
+    pub fn map_to_point(input: &u64) -> Self {
+        let mut point_bytes = GENERATOR.to_bytes();
+        let input = input.to_le_bytes();
+
+        let mut counter: u8 = 0;
+        let mut it: usize = 8;
+
+        loop {
+            // in the first iteration, we try to see if
+            // point = GENERATOR[31..8] || u64_input_value
+            // is an existing point
+            point_bytes[..u64::SIZE].copy_from_slice(&input);
+
+            // check if we hit a point on the curve
+            if let Ok(point) =
+                <JubJubAffine as Serializable<32>>::from_bytes(&point_bytes)
+            {
+                // check if this point is part of the correct subgroup and not
+                // the identity
+                if point.is_prime_order().into() {
+                    return point.into();
+                }
+            }
+
+            // if the previous step doesn't succeed, we keep trying by
+            // checking all 256 possible combinations for all the 24 bytes
+            // not belonging to the input value side of the vector
+            point_bytes[it] += counter;
+
+            if counter == u8::MAX {
+                counter = 0;
+
+                if it == 31 {
+                    panic!("No point exists ending with such u64.");
+                } else {
+                    it += 1;
+                }
+            } else {
+                counter += 1;
+            }
+        }
+    }
+
+    /// Method that unmaps a [`JubJubExtended`] point of the curve (created
+    /// using the 'map_to_point()' function) to its original [`u64`] value.
+    pub fn unmap_from_point(self) -> u64 {
+        let point_bytes: [u8; u64::SIZE] = JubJubAffine::from(self).to_bytes()
+            [..u64::SIZE]
+            .try_into()
+            .unwrap();
+        u64::from_le_bytes(point_bytes)
+    }
+
     /// Returns true if this point is on the curve. This should always return
     /// true unless an "unchecked" API was used.
     pub fn is_on_curve(&self) -> Choice {
@@ -286,6 +347,22 @@ impl JubJubExtended {
             && (affine.u * affine.v * self.z == self.t1 * self.t2))
             as u8)
             .into()
+    }
+}
+
+#[test]
+fn test_map_to_point() {
+    use rand::Rng;
+
+    let mut rng = rand::thread_rng();
+
+    // Test several random values
+    for _ in 0..500 {
+        let value: u64 = rng.gen();
+        let point = JubJubExtended::map_to_point(&value);
+        let unmapped_value = point.unmap_from_point();
+
+        assert_eq!(value, unmapped_value);
     }
 }
 
