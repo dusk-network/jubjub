@@ -285,18 +285,25 @@ impl JubJubExtended {
     /// map can require several tries, until finding a real point on the curve,
     /// that lies also on the correct subgroup.
     pub fn map_to_point(input: &u64) -> Self {
-        let mut point_bytes = GENERATOR.to_bytes();
         let input = input.to_le_bytes();
 
-        let mut counter: u8 = 0;
-        let mut it: usize = 8;
+        // we take the generator's y coodinate as our starting point
+        let mut y_coordinate = GENERATOR.get_v();
 
-        loop {
-            // in the first iteration, we try to see if
-            // point = GENERATOR[31..8] || u64_input_value
-            // is an existing point
-            point_bytes[..u64::SIZE].copy_from_slice(&input);
+        // this will be the bytes representation of our target point
+        let mut point_bytes = y_coordinate.to_bytes();
 
+        // we craft a point = (y_coordinate[31..8] || u64_input_value)
+        point_bytes[..u64::SIZE].copy_from_slice(&input);
+        y_coordinate = BlsScalar::from_bytes(&point_bytes).unwrap();
+
+        // the value we'll add on each iteration:
+        // 0x0000000000000000000000000000000000000000000000010000000000000000
+        let adder = BlsScalar::from(u64::MAX) + BlsScalar::one();
+
+        // we set a maximum number of iterations to avoid an
+        // 'in-practice' infinte loop
+        for _ in 0..u64::MAX {
             // check if we hit a point on the curve
             if let Ok(point) =
                 <JubJubAffine as Serializable<32>>::from_bytes(&point_bytes)
@@ -309,22 +316,17 @@ impl JubJubExtended {
             }
 
             // if the previous step doesn't succeed, we keep trying by
-            // checking all 256 possible combinations for all the 24 bytes
+            // checking all possible combinations for all the 24 bytes
             // not belonging to the input value side of the vector
-            point_bytes[it] += counter;
-
-            if counter == u8::MAX {
-                counter = 0;
-
-                if it == 31 {
-                    panic!("No point exists ending with such u64.");
-                } else {
-                    it += 1;
-                }
-            } else {
-                counter += 1;
-            }
+            //
+            // Notice that we we just try out the upper bound of the curve,
+            // we don't care about negative points since anyways
+            // we have set a maximum number of tries
+            y_coordinate += adder;
+            point_bytes = y_coordinate.to_bytes();
         }
+
+        panic!("No point is likely to be found soon enough.");
     }
 
     /// Method that unmaps a [`JubJubExtended`] point of the curve (created
