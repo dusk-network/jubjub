@@ -1,5 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use dusk_jubjub::*;
+use ff::Field;
 
 fn bench_add_assign(c: &mut Criterion) {
     let mut n = Fq::one();
