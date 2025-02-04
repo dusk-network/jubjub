@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `map_to_point` and `unmap_from_point` methods [#149]
+
 ## [0.14.3] - 2025-01-31
 
 ### Changed
@@ -236,6 +240,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#149]: https://github.com/dusk-network/jubjub/issues/149
 [#143]: https://github.com/dusk-network/jubjub/issues/143
 [#137]: https://github.com/dusk-network/jubjub/issues/137
 [#135]: https://github.com/dusk-network/jubjub/issues/135
