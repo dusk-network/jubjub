@@ -276,6 +276,69 @@ impl JubJubExtended {
         }
     }
 
+    /// Method that maps a [`u64`] input value to a [`JubJubExtended`] point
+    /// of the curve. This is a bidirectional operation, meaning
+    /// that the operation can be reverted by using the 'unmap_from_point()'
+    /// function.
+    ///
+    /// This is a probabilistic method, meaning that trying to find a correct
+    /// map can require several tries, until finding a real point on the curve,
+    /// that lies also on the correct subgroup.
+    pub fn map_to_point(input: &u64) -> Self {
+        let input = input.to_le_bytes();
+
+        // we take the generator's y coodinate as our starting point
+        let mut y_coordinate = GENERATOR.get_v();
+
+        // this will be the bytes representation of our target point
+        let mut point_bytes = y_coordinate.to_bytes();
+
+        // we craft a point = (y_coordinate[31..8] || u64_input_value)
+        point_bytes[..u64::SIZE].copy_from_slice(&input);
+        y_coordinate = BlsScalar::from_bytes(&point_bytes).unwrap();
+
+        // the value we'll add on each iteration:
+        // 0x0000000000000000000000000000000000000000000000010000000000000000
+        let adder = BlsScalar::from(u64::MAX) + BlsScalar::one();
+
+        // we set a maximum number of iterations to avoid an
+        // 'in-practice' infinte loop
+        for _ in 0..u64::MAX {
+            // check if we hit a point on the curve
+            if let Ok(point) =
+                <JubJubAffine as Serializable<32>>::from_bytes(&point_bytes)
+            {
+                // check if this point is part of the correct subgroup and not
+                // the identity
+                if point.is_prime_order().into() {
+                    return point.into();
+                }
+            }
+
+            // if the previous step doesn't succeed, we keep trying by
+            // checking all possible combinations for all the 24 bytes
+            // not belonging to the input value side of the vector
+            //
+            // Notice that we we just try out the upper bound of the curve,
+            // we don't care about negative points since anyways
+            // we have set a maximum number of tries
+            y_coordinate += adder;
+            point_bytes = y_coordinate.to_bytes();
+        }
+
+        panic!("No point is likely to be found soon enough.");
+    }
+
+    /// Method that unmaps a [`JubJubExtended`] point of the curve (created
+    /// using the 'map_to_point()' function) to its original [`u64`] value.
+    pub fn unmap_from_point(self) -> u64 {
+        let point_bytes: [u8; u64::SIZE] = JubJubAffine::from(self).to_bytes()
+            [..u64::SIZE]
+            .try_into()
+            .unwrap();
+        u64::from_le_bytes(point_bytes)
+    }
+
     /// Returns true if this point is on the curve. This should always return
     /// true unless an "unchecked" API was used.
     pub fn is_on_curve(&self) -> Choice {
@@ -286,6 +349,22 @@ impl JubJubExtended {
             && (affine.u * affine.v * self.z == self.t1 * self.t2))
             as u8)
             .into()
+    }
+}
+
+#[test]
+fn test_map_to_point() {
+    use rand::Rng;
+
+    let mut rng = rand::thread_rng();
+
+    // Test several random values
+    for _ in 0..500 {
+        let value: u64 = rng.gen();
+        let point = JubJubExtended::map_to_point(&value);
+        let unmapped_value = point.unmap_from_point();
+
+        assert_eq!(value, unmapped_value);
     }
 }
 
