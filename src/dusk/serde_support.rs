@@ -54,24 +54,45 @@ impl<'de> Deserialize<'de> for ExtendedPoint {
 
 #[cfg(test)]
 mod tests {
+    use std::boxed::Box;
+    use std::string::String;
+
     use group::Group;
     use rand::rngs::StdRng;
     use rand::SeedableRng;
 
-    use crate::{AffinePoint, ExtendedPoint};
+    use super::*;
+    use crate::{dusk::test_utils, AffinePoint, ExtendedPoint};
 
     #[test]
-    fn serde_affine_point() {
+    fn serde_affine_point() -> Result<(), Box<dyn std::error::Error>> {
         let mut rng = StdRng::seed_from_u64(0xdead);
         let point = ExtendedPoint::random(&mut rng);
         let point = AffinePoint::from(point);
-        let ser = serde_json::to_string(&point).unwrap();
-        let deser = serde_json::from_str(&ser).unwrap();
+        let ser = test_utils::assert_canonical_json(
+            &point,
+            "\"7bdf072820ef769376583c858687144b0dcaccf8319880627c82eef222f8c6cb\""
+        )?;
+        let deser = serde_json::from_str(&ser)?;
         assert_eq!(point, deser);
+        Ok(())
     }
 
     #[test]
-    fn serde_wrong_encoded() {
+    fn serde_extended_point() -> Result<(), Box<dyn std::error::Error>> {
+        let mut rng = StdRng::seed_from_u64(0xdead);
+        let point = ExtendedPoint::random(&mut rng);
+        let ser = test_utils::assert_canonical_json(
+            &point,
+            "\"7bdf072820ef769376583c858687144b0dcaccf8319880627c82eef222f8c6cb\""
+        )?;
+        let deser = serde_json::from_str(&ser)?;
+        assert_eq!(point, deser);
+        Ok(())
+    }
+
+    #[test]
+    fn serde_affine_point_wrong_encoded() {
         let wrong_encoded = "wrong-encoded";
 
         let affine_point: Result<AffinePoint, _> =
@@ -80,7 +101,7 @@ mod tests {
     }
 
     #[test]
-    fn serde_too_long_encoded() {
+    fn serde_affine_point_too_long_encoded() {
         let length_33_enc = "\"e4ab9de40283a85d6ea0cd0120500697d8b01c71b7b4b520292252d20937000631\"";
 
         let affine_point: Result<AffinePoint, _> =
@@ -89,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn serde_too_short_encoded() {
+    fn serde_affine_point_too_short_encoded() {
         let length_31_enc = "\"1751c37a1dca7aa4c048fcc6177194243edc3637bae042e167e4285945e046\"";
 
         let affine_point: Result<AffinePoint, _> =

@@ -409,32 +409,50 @@ fn test_zeroize() {
     assert_eq!(scalar, Fr::zero());
 }
 
-#[cfg(feature = "serde")]
-#[test]
-fn serde_fr() {
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use std::boxed::Box;
+
     use ff::Field;
     use rand::rngs::StdRng;
     use rand::SeedableRng;
 
-    let mut rng = StdRng::seed_from_u64(0xdead);
-    let fr = Fr::random(&mut rng);
-    let ser = serde_json::to_string(&fr).unwrap();
-    let deser = serde_json::from_str(&ser).unwrap();
-    assert_eq!(fr, deser);
+    use super::*;
+    use crate::dusk::test_utils;
 
-    // Should error when the encoding is wrong
-    let wrong_encoded = "wrong-encoded";
-    let fr: Result<Fr, _> = serde_json::from_str(&wrong_encoded);
-    assert!(fr.is_err());
+    #[test]
+    fn serde_fr() -> Result<(), Box<dyn std::error::Error>> {
+        let mut rng = StdRng::seed_from_u64(0xdead);
+        let fr = Fr::random(&mut rng);
+        let ser = test_utils::assert_canonical_json(
+            &fr,
+            "\"052385ff7468e23e6cc710b15579e0e7a7181b6cccc658a04d5c85682ee0f405\""
+        )?;
+        let deser = serde_json::from_str(&ser).unwrap();
+        assert_eq!(fr, deser);
 
-    // Should error when the input is too long
-    let length_33_enc = "\"e4ab9de40283a85d6ea0cd0120500697d8b01c71b7b4b520292252d20937000631\"";
-    let fr: Result<Fr, _> = serde_json::from_str(&length_33_enc);
-    assert!(fr.is_err());
+        Ok(())
+    }
 
-    // Should error when the input is too short
-    let length_31_enc =
-        "\"1751c37a1dca7aa4c048fcc6177194243edc3637bae042e167e4285945e046\"";
-    let fr: Result<Fr, _> = serde_json::from_str(&length_31_enc);
-    assert!(fr.is_err());
+    #[test]
+    fn serde_fr_wrong_encoded() {
+        let wrong_encoded = "\"wrong-encoded\"";
+        let fr: Result<Fr, _> = serde_json::from_str(&wrong_encoded);
+        assert!(fr.is_err());
+    }
+
+    #[test]
+    fn serde_fr_too_long() {
+        let length_33_enc = "\"e4ab9de40283a85d6ea0cd0120500697d8b01c71b7b4b520292252d20937000631\"";
+        let fr: Result<Fr, _> = serde_json::from_str(&length_33_enc);
+        assert!(fr.is_err());
+    }
+
+    #[test]
+    fn serde_fr_too_short() {
+        let length_31_enc =
+            "\"1751c37a1dca7aa4c048fcc6177194243edc3637bae042e167e4285945e046\"";
+        let fr: Result<Fr, _> = serde_json::from_str(&length_31_enc);
+        assert!(fr.is_err());
+    }
 }
