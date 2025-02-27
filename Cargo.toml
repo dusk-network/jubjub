@@ -69,14 +69,12 @@ default-features = false
 
 [dependencies.serde]
 version = "1.0"
-optional = true
-
-[dependencies.serde_json]
-version = "1.0"
+default-features = false
 optional = true
 
 [dependencies.hex]
 version = "0.4"
+default-features = false
 optional = true
 # End Dusk dependendencies
 
@@ -96,12 +94,15 @@ version = "0.9"
 [dev-dependencies.rand]
 version = "0.8"
 
+[dev-dependencies.serde_json]
+version = "1.0"
+
 [features]
 default = ["alloc", "bits"]
 alloc = ["ff/alloc", "group/alloc"]
 bits = ["ff/bits"]
 rkyv-impl = ["bytecheck", "dusk-bls12_381/rkyv-impl", "rkyv"]
-serde = ["dep:serde", "serde_json", "hex"]
+serde = ["serde/alloc", "hex/alloc"]
 
 [[bench]]
 name = "fq_bench"
