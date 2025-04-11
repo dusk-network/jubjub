@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Serde feature no longer has any std dependence [#3596]
+
 ## [0.15.1] - 2025-02-13
 
 ### Added
@@ -242,6 +246,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#3596]: https://github.com/dusk-network/rusk/issues/3596
 [#149]: https://github.com/dusk-network/jubjub/issues/149
 [#143]: https://github.com/dusk-network/jubjub/issues/143
 [#137]: https://github.com/dusk-network/jubjub/issues/137
