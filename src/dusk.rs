@@ -99,7 +99,8 @@ impl Serializable<32> for JubJubAffine {
 
     /// Attempts to interpret a byte representation of an
     /// affine point, failing if the element is not on
-    /// the curve or non-canonical.
+    /// the curve or non-canonical. Plus, it checks that the point is in
+    /// the prime-order subgroup, rejecting points in the small subgroup.
     ///
     /// NOTE: ZIP 216 is enabled by default and the only way to interact
     /// with serialization.
@@ -144,6 +145,7 @@ impl Serializable<32> for JubJubAffine {
                 // if all of the following occur:
                 // - x == 0
                 // - flip_sign == true
+                // Also, if point is not torsion free, we want to reject it as well.
                 let u_is_zero = u.ct_eq(&BlsScalar::zero());
                 let point = JubJubAffine { u, v };
                 CtOption::new(
