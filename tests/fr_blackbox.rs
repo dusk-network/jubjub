@@ -135,6 +135,7 @@ fn test_dhke() {
         assert_ne!(dhke(&a, &b_g), dhke(&b, &b_g));
     }
 }
+
 #[test]
 fn test_from_jubjub_to_bls_scalar() {
     assert_eq!(
