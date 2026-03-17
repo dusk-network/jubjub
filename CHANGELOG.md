@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Remove public `From<i8>` impl for `Fr` (Montgomery form invariant violation)
+
 ## [0.15.2] - 2026-02-27
 
 ### Changed
@@ -272,7 +276,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#32]: https://github.com/dusk-network/jubjub/issues/32
 [#31]: https://github.com/dusk-network/jubjub/issues/31
 [#25]: https://github.com/dusk-network/jubjub/issues/25
-
 
 <!-- VERSIONS -->
 [Unreleased]: https://github.com/dusk-network/jubjub/compare/v0.15.2...HEAD

@@ -145,7 +145,7 @@ impl Fr {
             if !k.is_even() {
                 let ki = k.mods_2_pow_k(width);
                 res[i] = ki;
-                k -= Fr::from(ki);
+                k -= fr_raw_from_i8(ki);
             } else {
                 res[i] = 0i8;
             };
@@ -157,15 +157,16 @@ impl Fr {
     }
 }
 
-// TODO implement From<T> for any integer type smaller than 128-bit
-impl From<i8> for Fr {
-    // FIXME this could really be better if we removed the match
-    fn from(val: i8) -> Fr {
-        match (val >= 0, val < 0) {
-            (true, false) => Fr([val.unsigned_abs() as u64, 0u64, 0u64, 0u64]),
-            (false, true) => -Fr([val.unsigned_abs() as u64, 0u64, 0u64, 0u64]),
-            (_, _) => unreachable!(),
-        }
+/// Convert a signed byte to a raw-form `Fr` for internal WNAF arithmetic.
+///
+/// This deliberately produces raw form (no Montgomery conversion) because
+/// `compute_windowed_naf` operates entirely in raw form.
+fn fr_raw_from_i8(val: i8) -> Fr {
+    let abs = Fr([val.unsigned_abs() as u64, 0u64, 0u64, 0u64]);
+    if val < 0 {
+        -abs
+    } else {
+        abs
     }
 }
 
