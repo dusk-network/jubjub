@@ -1,1 +1,7 @@
 max_width = 80
+unstable_features = true
+use_field_init_shorthand = true
+wrap_comments = true
+# We're not using these flags here to not re-format the upstream code
+# group_imports = "StdExternalCrate"
+# imports_granularity = "Module"

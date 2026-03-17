@@ -145,7 +145,8 @@ impl Serializable<32> for JubJubAffine {
                 // if all of the following occur:
                 // - x == 0
                 // - flip_sign == true
-                // Also, if point is not torsion free, we want to reject it as well.
+                // Also, if point is not torsion free, we want to reject it as
+                // well.
                 let u_is_zero = u.ct_eq(&BlsScalar::zero());
                 let point = JubJubAffine { u, v };
                 CtOption::new(
