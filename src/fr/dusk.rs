@@ -200,12 +200,25 @@ impl IndexMut<usize> for Fr {
     }
 }
 
+/// Delegates to [`Ord`], providing a consistent total order over `Fr`
+/// values based on their internal Montgomery-form limbs. This order is
+/// **not** the canonical numerical ordering of field elements — it is an
+/// implementation-specific order suitable for use in ordered data
+/// structures such as `BTreeSet` and `BTreeMap`.
 impl PartialOrd for Fr {
     fn partial_cmp(&self, other: &Fr) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
+/// Compares two `Fr` values by their internal Montgomery-form limb
+/// representation in big-limb-first (most-significant-first) order.
+///
+/// This ordering is a consistent total order, making `Fr` usable in
+/// ordered collections (`BTreeSet`, `BTreeMap`, etc.), but it does
+/// **not** correspond to the canonical numerical ordering of field
+/// elements. Two scalars that are adjacent in the field may not be
+/// adjacent under this ordering, and vice versa.
 impl Ord for Fr {
     fn cmp(&self, other: &Self) -> Ordering {
         let a = self;
