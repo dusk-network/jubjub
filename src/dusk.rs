@@ -37,9 +37,10 @@ pub fn dhke(secret: &Fr, public: &JubJubExtended) -> JubJubAffine {
 /// - It lies on the curve,
 /// - Is of prime order,
 /// - Is not the identity point.
+///
 /// Using:
-///     x = 0x3fd2814c43ac65a6f1fbf02d0fd6cce62e3ebb21fd6c54ed4df7b7ffec7beaca
-///     y = 0x0000000000000000000000000000000000000000000000000000000000000012
+/// - `x = 0x3fd2814c43ac65a6f1fbf02d0fd6cce62e3ebb21fd6c54ed4df7b7ffec7beaca`
+/// - `y = 0x0000000000000000000000000000000000000000000000000000000000000012`
 pub const GENERATOR: JubJubAffine = JubJubAffine {
     u: BlsScalar::from_raw([
         0x4df7b7ffec7beaca,
@@ -65,7 +66,7 @@ pub const GENERATOR_EXTENDED: JubJubExtended = JubJubExtended {
 };
 
 /// GENERATOR NUMS which is obtained following the specs in:
-/// https://app.gitbook.com/@dusk-network/s/specs/specifications/poseidon/pedersen-commitment-scheme
+/// <https://app.gitbook.com/@dusk-network/s/specs/specifications/poseidon/pedersen-commitment-scheme>
 /// The counter = 18 and the hash function used to compute it was blake2b
 /// Using:
 ///     x = 0x5e67b8f316f414f7bd9514c773fd4456931e316a39fe4541921710179df76377

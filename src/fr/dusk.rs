@@ -24,7 +24,7 @@ impl Fr {
     ///
     /// By treating the output of the BLAKE2b hash as a random oracle, this
     /// implementation follows the first conversion of
-    /// https://hackmd.io/zV6qe1_oSU-kYU6Tt7pO7Q with concrete numbers:
+    /// <https://hackmd.io/zV6qe1_oSU-kYU6Tt7pO7Q> with concrete numbers:
     /// ```text
     /// p = 0x0e7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb7
     /// p = 6554484396890773809930967563523245729705921265872317281365359162392183254199
@@ -130,11 +130,11 @@ impl Fr {
     /// the JubJub Scalar field.
     ///
     /// The wnaf of a scalar is its breakdown:
-    ///     scalar = sum_i{wnaf[i]*2^i}
+    ///     scalar = sum_i{wnaf\[i\]*2^i}
     /// where for all i:
-    ///     -2^{w-1} < wnaf[i] < 2^{w-1}
+    ///     -2^{w-1} < wnaf\[i\] < 2^{w-1}
     /// and
-    ///     wnaf[i] * wnaf[i+1] = 0
+    ///     wnaf\[i\] * wnaf\[i+1\] = 0
     pub fn compute_windowed_naf(&self, width: u8) -> [i8; 256] {
         let mut k = self.reduce();
         let mut i = 0;

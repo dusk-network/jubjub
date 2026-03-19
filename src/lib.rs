@@ -32,6 +32,11 @@
 // In our library, some of the arithmetic will necessarily involve various
 // binary operators, and so this lint is triggered unnecessarily.
 #![allow(clippy::suspicious_arithmetic_impl)]
+// Upstream zkcrypto code triggers these lints on current Rust.
+#![allow(clippy::needless_lifetimes)]
+#![allow(clippy::useless_conversion)]
+#![allow(unused_attributes)]
+#![allow(rustdoc::redundant_explicit_links)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
