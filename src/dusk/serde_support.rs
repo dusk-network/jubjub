@@ -55,13 +55,11 @@ impl<'de> Deserialize<'de> for ExtendedPoint {
 #[cfg(test)]
 mod tests {
     use std::boxed::Box;
-    use std::string::String;
 
     use group::Group;
     use rand::rngs::StdRng;
     use rand::SeedableRng;
 
-    use super::*;
     use crate::{dusk::test_utils, AffinePoint, ExtendedPoint};
 
     #[test]
