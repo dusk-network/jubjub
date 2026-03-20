@@ -453,6 +453,24 @@ fn hash_to_scalar_zero_domain_matches_legacy() {
 }
 
 #[test]
+fn hash_to_scalar_domain_test_vector() {
+    // Hardcoded test vector: hash_to_scalar([1u8; 32], b"domain separation
+    // test") Independently verified via BLAKE2b-512([1u8;32] || input) mod
+    // r.
+    let input = b"domain separation test";
+    let domain = [1u8; 32];
+
+    let expected = Fr::from_bytes(&[
+        99, 9, 24, 31, 103, 222, 6, 249, 115, 120, 95, 123, 80, 108, 195, 78,
+        128, 56, 94, 155, 67, 216, 176, 64, 182, 138, 190, 203, 236, 207, 36,
+        4,
+    ])
+    .unwrap();
+
+    assert_eq!(Fr::hash_to_scalar(&domain, input), expected);
+}
+
+#[test]
 fn hash_to_scalar_nonzero_domain_differs() {
     let input = b"jubjub-hash-to-scalar-test-input";
     let domain = [1u8; 32];
