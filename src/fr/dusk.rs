@@ -22,6 +22,14 @@ impl Fr {
     /// into a 512-bits number, and then converting the number into its scalar
     /// representation by reducing it by the modulo.
     ///
+    /// # Arguments
+    ///
+    /// * `domain` — 32-byte domain separator. All-zeros means no domain prefix
+    ///   (backward-compatible with pre-domain callers). Non-zero bytes are
+    ///   prepended to the input before hashing. Callers SHOULD use a unique
+    ///   non-zero domain tag for their security context.
+    /// * `input` — arbitrary-length byte slice to hash.
+    ///
     /// By treating the output of the BLAKE2b hash as a random oracle, this
     /// implementation follows the first conversion of
     /// <https://hackmd.io/zV6qe1_oSU-kYU6Tt7pO7Q> with concrete numbers:
@@ -38,12 +46,16 @@ impl Fr {
     ///
     /// m' = 2244478849891746936202736009816130624903096691796347063256129649283183245105
     /// ```
-    pub fn hash_to_scalar(input: &[u8]) -> Self {
-        let state = blake2b_simd::Params::new()
-            .hash_length(64)
-            .to_state()
-            .update(input)
-            .finalize();
+    pub fn hash_to_scalar(domain: &[u8; 32], input: &[u8]) -> Self {
+        let mut state = blake2b_simd::Params::new().hash_length(64).to_state();
+
+        // Zero domain = legacy behavior (no prefix).
+        // Non-zero domain = prepend 32-byte domain separator.
+        if domain.iter().any(|&b| b != 0) {
+            state.update(domain);
+        }
+
+        let state = state.update(input).finalize();
 
         let bytes = state.as_bytes();
 
@@ -406,11 +418,62 @@ mod fuzz {
 
     quickcheck::quickcheck! {
         fn prop_hash_to_scalar(bytes: Vec<u8>) -> bool {
-            let scalar = Fr::hash_to_scalar(&bytes);
+            let scalar = Fr::hash_to_scalar(&[0u8; 32], &bytes);
 
             is_scalar_in_range(&scalar)
         }
     }
+}
+
+#[test]
+fn hash_to_scalar_zero_domain_matches_legacy() {
+    let input = b"jubjub-hash-to-scalar-test-input";
+
+    let legacy = {
+        let state = blake2b_simd::Params::new()
+            .hash_length(64)
+            .to_state()
+            .update(input)
+            .finalize();
+        let bytes = state.as_bytes();
+        Fr::from_u512([
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[0..8]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[8..16]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[16..24]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[24..32]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[32..40]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[40..48]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[48..56]).unwrap()),
+            u64::from_le_bytes(<[u8; 8]>::try_from(&bytes[56..64]).unwrap()),
+        ])
+    };
+
+    let result = Fr::hash_to_scalar(&[0u8; 32], input);
+    assert_eq!(result, legacy);
+}
+
+#[test]
+fn hash_to_scalar_nonzero_domain_differs() {
+    let input = b"jubjub-hash-to-scalar-test-input";
+    let domain = [1u8; 32];
+
+    let without_domain = Fr::hash_to_scalar(&[0u8; 32], input);
+    let with_domain = Fr::hash_to_scalar(&domain, input);
+
+    assert_ne!(without_domain, with_domain);
+}
+
+#[test]
+fn hash_to_scalar_different_domains_differ() {
+    let input = b"jubjub-hash-to-scalar-test-input";
+    let domain_a = [1u8; 32];
+    let mut domain_b = [1u8; 32];
+    domain_b[0] = 2;
+
+    let result_a = Fr::hash_to_scalar(&domain_a, input);
+    let result_b = Fr::hash_to_scalar(&domain_b, input);
+
+    assert_ne!(result_a, result_b);
 }
 
 #[cfg(feature = "zeroize")]
