@@ -24,9 +24,9 @@ impl Fr {
     ///
     /// # Arguments
     ///
-    /// * `domain` — 32-byte domain separator. All-zeros means no domain prefix
-    ///   (backward-compatible with pre-domain callers). Non-zero bytes are
-    ///   prepended to the input before hashing. Callers SHOULD use a unique
+    /// * `domain` — optional 32-byte domain separator. `None` means no domain
+    ///   prefix. `Some(bytes)` prepends the 32 bytes to the input before
+    ///   hashing — including `Some([0u8; 32])`. Callers SHOULD use a unique
     ///   non-zero domain tag for their security context.
     /// * `input` — arbitrary-length byte slice to hash.
     ///
@@ -46,13 +46,14 @@ impl Fr {
     ///
     /// m' = 2244478849891746936202736009816130624903096691796347063256129649283183245105
     /// ```
-    pub fn hash_to_scalar(domain: &[u8; 32], input: &[u8]) -> Self {
+    pub fn hash_to_scalar(
+        domain: impl Into<Option<[u8; 32]>>,
+        input: &[u8],
+    ) -> Self {
         let mut state = blake2b_simd::Params::new().hash_length(64).to_state();
 
-        // Zero domain = legacy behavior (no prefix).
-        // Non-zero domain = prepend 32-byte domain separator.
-        if domain.iter().any(|&b| b != 0) {
-            state.update(domain);
+        if let Some(domain) = domain.into() {
+            state.update(&domain);
         }
 
         let state = state.update(input).finalize();
@@ -418,7 +419,7 @@ mod fuzz {
 
     quickcheck::quickcheck! {
         fn prop_hash_to_scalar(bytes: Vec<u8>) -> bool {
-            let scalar = Fr::hash_to_scalar(&[0u8; 32], &bytes);
+            let scalar = Fr::hash_to_scalar(None, &bytes);
 
             is_scalar_in_range(&scalar)
         }
@@ -426,7 +427,7 @@ mod fuzz {
 }
 
 #[test]
-fn hash_to_scalar_zero_domain_matches_legacy() {
+fn hash_to_scalar_none_domain_matches_legacy() {
     let input = b"jubjub-hash-to-scalar-test-input";
 
     let legacy = {
@@ -448,7 +449,7 @@ fn hash_to_scalar_zero_domain_matches_legacy() {
         ])
     };
 
-    let result = Fr::hash_to_scalar(&[0u8; 32], input);
+    let result = Fr::hash_to_scalar(None, input);
     assert_eq!(result, legacy);
 }
 
@@ -467,18 +468,28 @@ fn hash_to_scalar_domain_test_vector() {
     ])
     .unwrap();
 
-    assert_eq!(Fr::hash_to_scalar(&domain, input), expected);
+    assert_eq!(Fr::hash_to_scalar(domain, input), expected);
 }
 
 #[test]
-fn hash_to_scalar_nonzero_domain_differs() {
+fn hash_to_scalar_some_domain_differs_from_none() {
     let input = b"jubjub-hash-to-scalar-test-input";
     let domain = [1u8; 32];
 
-    let without_domain = Fr::hash_to_scalar(&[0u8; 32], input);
-    let with_domain = Fr::hash_to_scalar(&domain, input);
+    let without_domain = Fr::hash_to_scalar(None, input);
+    let with_domain = Fr::hash_to_scalar(domain, input);
 
     assert_ne!(without_domain, with_domain);
+}
+
+#[test]
+fn hash_to_scalar_none_differs_from_zero_domain() {
+    let input = b"jubjub-hash-to-scalar-test-input";
+
+    let none_result = Fr::hash_to_scalar(None, input);
+    let zero_result = Fr::hash_to_scalar([0u8; 32], input);
+
+    assert_ne!(none_result, zero_result);
 }
 
 #[test]
@@ -488,8 +499,8 @@ fn hash_to_scalar_different_domains_differ() {
     let mut domain_b = [1u8; 32];
     domain_b[0] = 2;
 
-    let result_a = Fr::hash_to_scalar(&domain_a, input);
-    let result_b = Fr::hash_to_scalar(&domain_b, input);
+    let result_a = Fr::hash_to_scalar(domain_a, input);
+    let result_b = Fr::hash_to_scalar(domain_b, input);
 
     assert_ne!(result_a, result_b);
 }
