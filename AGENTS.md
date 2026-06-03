@@ -17,8 +17,8 @@ directly.
 ## Commands
 
 ```bash
-make test      # Run tests (std + no_std)
-make clippy    # Run clippy
+make test      # Run tests (std + no_std, both BLS backends)
+make clippy    # Run clippy (both BLS backends)
 make fmt       # Format code (requires nightly)
 make check     # Type-check
 make doc       # Generate docs
@@ -45,13 +45,15 @@ cargo bench    # Run benchmarks
 
 - `AffinePoint` / `ExtendedPoint` — curve point representations
 - `Fr` (aka `JubJubScalar`) — scalar field
-- `Fq` (aka `BlsScalar`) — base field (aliased from dusk-bls12_381)
+- `Fq` (aka `BlsScalar`) — base field (aliased from dusk-curves)
 - Dusk additions: `dhke()`, `GENERATOR`, `GENERATOR_NUMS`
 
 ### Features (defaults: alloc, bits)
 
 - `alloc` — allocation support
 - `bits` — bit operations on field elements
+- `bls-backend-dusk` — use the dusk-curves Dusk BLS12-381 backend
+- `bls-backend-blst` — use the dusk-curves blst-backed BLS12-381 backend
 - `rkyv-impl` — rkyv zero-copy serialization
 - `serde` — JSON serialization (includes serde_json, hex)
 - `zeroize` — secure memory zeroing
@@ -66,7 +68,10 @@ cargo bench    # Run benchmarks
 - **Montgomery form**: `Fr` values must be in Montgomery form for public APIs.
   Raw-form values are only for internal arithmetic (e.g. WNAF).
 - **Test both configurations**: always run `make test`, which covers
-  `--features=zeroize,serde` and `--no-default-features`.
+  `--features=bls-backend-blst,zeroize,serde`,
+  `--features=bls-backend-dusk,zeroize,serde`,
+  `--no-default-features --features=bls-backend-blst`, and
+  `--no-default-features --features=bls-backend-dusk`.
 
 ## Changelog
 

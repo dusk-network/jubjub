@@ -14,8 +14,8 @@ use core::ops::Mul;
 use ff::Field;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
-pub use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
+pub use dusk_curves::bls12_381::BlsScalar;
 
 use crate::{Fq, Fr, JubJubAffine, JubJubExtended, EDWARDS_D};
 

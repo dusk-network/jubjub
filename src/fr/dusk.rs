@@ -8,8 +8,8 @@ use core::cmp::{Ord, Ordering, PartialOrd};
 use core::convert::TryInto;
 use core::ops::{Index, IndexMut};
 
-use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
+use dusk_curves::bls12_381::BlsScalar;
 
 use super::{Fr, MODULUS, R2};
 use crate::util::sbb;

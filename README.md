@@ -29,6 +29,16 @@ This is a pure Rust implementation of the Jubjub elliptic curve group and its as
 
 ## [Documentation](https://docs.rs/dusk-jubjub/)
 
+## BLS Backend Feature
+
+This crate uses `dusk-curves` for the BLS12-381 scalar field. Consumers must
+enable exactly one backend feature:
+
+- `bls-backend-dusk`
+- `bls-backend-blst`
+
+Repository test and CI commands exercise both backend features independently.
+
 ## Curve Description
 
 Jubjub is the [twisted Edwards curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve) `-u^2 + v^2 = 1 + d.u^2.v^2` of rational points over `GF(q)` with a subgroup of prime order `r` and cofactor `8`.
