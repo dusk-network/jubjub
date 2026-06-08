@@ -23,6 +23,22 @@ jobs:
       - uses: dsherret/rust-toolchain-file@v1
       - run: make test
 
+  clippy:
+    name: Clippy
+    runs-on: core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dsherret/rust-toolchain-file@v1
+      - run: make clippy
+
+  check:
+    name: Check
+    runs-on: core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dsherret/rust-toolchain-file@v1
+      - run: make check
+
   no-std:
     name: no_std + WASM
     runs-on: core
