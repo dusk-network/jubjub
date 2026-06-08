@@ -38,6 +38,16 @@
 #![allow(unused_attributes)]
 #![allow(rustdoc::redundant_explicit_links)]
 
+#[cfg(all(feature = "bls-backend-dusk", feature = "bls-backend-blst"))]
+compile_error!(
+    "features 'bls-backend-dusk' and 'bls-backend-blst' are mutually exclusive"
+);
+
+#[cfg(not(any(feature = "bls-backend-dusk", feature = "bls-backend-blst")))]
+compile_error!(
+    "enable either feature 'bls-backend-dusk' or 'bls-backend-blst'"
+);
+
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
@@ -78,8 +88,8 @@ pub type JubJubAffine = AffinePoint;
 pub type JubJubExtended = ExtendedPoint;
 /// An alias for [`Fr`].
 pub type JubJubScalar = Fr;
-pub use dusk_bls12_381::BlsScalar;
-pub use dusk_bls12_381::BlsScalar as Fq;
+pub use dusk_curves::bls12_381::BlsScalar;
+pub use dusk_curves::bls12_381::BlsScalar as Fq;
 // end
 
 #[macro_use]

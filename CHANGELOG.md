@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Replace direct `dusk-bls12_381` dependency with `dusk-curves` 0.2.
+- Add `bls-backend-dusk` and `bls-backend-blst` features; consumers must
+  enable exactly one BLS backend.
+- Exercise both BLS backend features in repository test, lint, build, and
+  documentation targets.
+
 ### Removed
 
 - Remove public `From<i8>` impl for `Fr` (Montgomery form invariant violation)
