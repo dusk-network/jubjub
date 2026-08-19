@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `hash_to_scalar` now takes a `domain: impl Into<Option<[u8; 32]>>`
+  parameter. Pass `None` for the byte-compatible legacy construction, or a
+  `[u8; 32]` value to select the personalized domain-separated construction.
+
+### Fixed
+
+- Prevent domain-separated `hash_to_scalar` calls from aliasing legacy inputs
+  with the same domain prefix [#158]
+
 ### Removed
 
 - Remove public `From<i8>` impl for `Fr` (Montgomery form invariant violation)
@@ -15,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `hash_to_scalar` now takes a `domain: impl Into<Option<[u8; 32]>>` parameter for domain separation. Pass `None` for no domain prefix (backward-compatible behavior). `Some(domain)` prepends the 32-byte domain separator before hashing.
 - Serde feature no longer has any std dependence [#3596]
 
 ## [0.15.1] - 2025-02-13
@@ -253,6 +263,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#158]: https://github.com/dusk-network/jubjub/issues/158
 [#3596]: https://github.com/dusk-network/rusk/issues/3596
 [#149]: https://github.com/dusk-network/jubjub/issues/149
 [#143]: https://github.com/dusk-network/jubjub/issues/143

@@ -24,10 +24,10 @@ impl Fr {
     ///
     /// # Arguments
     ///
-    /// * `domain` — optional 32-byte domain separator. `None` means no domain
-    ///   prefix. `Some(bytes)` prepends the 32 bytes to the input before
-    ///   hashing — including `Some([0u8; 32])`. Callers SHOULD use a unique
-    ///   non-zero domain tag for their security context.
+    /// * `domain` — optional 32-byte domain separator. `None` uses the legacy,
+    ///   unpersonalized BLAKE2b construction. `Some(bytes)` uses BLAKE2b-512
+    ///   with `personal = b"DUSK-H2S-JUBJUB\0"` over `bytes || input`. Callers
+    ///   SHOULD use a unique non-zero domain tag for their security context.
     /// * `input` — arbitrary-length byte slice to hash.
     ///
     /// By treating the output of the BLAKE2b hash as a random oracle, this
@@ -50,9 +50,19 @@ impl Fr {
         domain: impl Into<Option<[u8; 32]>>,
         input: &[u8],
     ) -> Self {
-        let mut state = blake2b_simd::Params::new().hash_length(64).to_state();
+        const DOMAIN_PERSONALIZATION: &[u8; 16] = b"DUSK-H2S-JUBJUB\0";
 
-        if let Some(domain) = domain.into() {
+        let domain = domain.into();
+        let mut params = blake2b_simd::Params::new();
+        params.hash_length(64);
+
+        if domain.is_some() {
+            params.personal(DOMAIN_PERSONALIZATION);
+        }
+
+        let mut state = params.to_state();
+
+        if let Some(domain) = domain {
             state.update(&domain);
         }
 
@@ -455,20 +465,33 @@ fn hash_to_scalar_none_domain_matches_legacy() {
 
 #[test]
 fn hash_to_scalar_domain_test_vector() {
-    // Hardcoded test vector: hash_to_scalar([1u8; 32], b"domain separation
-    // test") Independently verified via BLAKE2b-512([1u8;32] || input) mod
-    // r.
+    // Hardcoded test vector: BLAKE2b-512 with personalization
+    // b"DUSK-H2S-JUBJUB\0" over [1u8; 32] || b"domain separation test",
+    // interpreted as a little-endian integer and reduced modulo r.
     let input = b"domain separation test";
     let domain = [1u8; 32];
 
     let expected = Fr::from_bytes(&[
-        99, 9, 24, 31, 103, 222, 6, 249, 115, 120, 95, 123, 80, 108, 195, 78,
-        128, 56, 94, 155, 67, 216, 176, 64, 182, 138, 190, 203, 236, 207, 36,
-        4,
+        191, 34, 74, 177, 170, 123, 79, 155, 185, 245, 227, 61, 61, 20, 150,
+        113, 123, 254, 250, 218, 13, 68, 43, 201, 237, 155, 164, 8, 52, 233,
+        197, 4,
     ])
     .unwrap();
 
     assert_eq!(Fr::hash_to_scalar(domain, input), expected);
+}
+
+#[test]
+fn hash_to_scalar_domain_cannot_alias_legacy_input() {
+    let domain = [0x42; 32];
+    let input = b"domain-separated input";
+    let mut legacy_input = domain.to_vec();
+    legacy_input.extend_from_slice(input);
+
+    assert_ne!(
+        Fr::hash_to_scalar(domain, input),
+        Fr::hash_to_scalar(None, &legacy_input),
+    );
 }
 
 #[test]
