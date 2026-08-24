@@ -463,16 +463,15 @@ fn test_is_on_curve() {
 
 #[test]
 fn second_gen_nums() {
-    use blake2::{Blake2b, Digest};
     let generator_bytes = GENERATOR.to_bytes();
     let mut counter = 0u64;
     let mut array = [0u8; 32];
     loop {
-        let mut hasher = Blake2b::new();
-        hasher.update(generator_bytes);
-        hasher.update(counter.to_le_bytes());
+        let mut hasher = blake2b_simd::Params::new().hash_length(64).to_state();
+        hasher.update(&generator_bytes);
+        hasher.update(&counter.to_le_bytes());
         let res = hasher.finalize();
-        array.copy_from_slice(&res[0..32]);
+        array.copy_from_slice(&res.as_bytes()[0..32]);
         if <JubJubAffine as Serializable<32>>::from_bytes(&array).is_ok()
             && <JubJubAffine as Serializable<32>>::from_bytes(&array)
                 .unwrap()
