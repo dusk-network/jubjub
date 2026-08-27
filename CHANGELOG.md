@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Raise the minimum supported Rust version to 1.96.1 [#164]
 - `hash_to_scalar` now takes a `domain: impl Into<Option<[u8; 32]>>`
   parameter. Pass `None` for the byte-compatible legacy construction, or a
   `[u8; 32]` value to select the personalized domain-separated construction.
@@ -263,6 +264,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#164]: https://github.com/dusk-network/jubjub/issues/164
 [#158]: https://github.com/dusk-network/jubjub/issues/158
 [#3596]: https://github.com/dusk-network/rusk/issues/3596
 [#149]: https://github.com/dusk-network/jubjub/issues/149

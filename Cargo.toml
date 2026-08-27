@@ -15,7 +15,7 @@ version = "0.15.2"
 keywords = ["cryptography", "jubjub", "zk-snarks", "ecc", "elliptic-curve"]
 categories =["algorithms", "cryptography", "science", "no-std"]
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.96.1"
 exclude = [
     ".github/*",
     ".gitignore",
