@@ -38,7 +38,6 @@ cargo bench    # Run benchmarks
 | `src/dusk.rs` | Dusk extensions: dhke, generators, additional ops |
 | `src/dusk/serde_support.rs` | Serde for AffinePoint/ExtendedPoint |
 | `src/fr/dusk.rs` | Dusk-specific Fr operations |
-| `src/elgamal.rs` | ElGamal encryption |
 | `src/util.rs` | Utility functions |
 
 ### Key Types
