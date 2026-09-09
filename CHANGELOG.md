@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Make `JubJubExtended::is_on_curve` constant-time [#168]
 - Raise the minimum supported Rust version to 1.96.1 [#164]
 - `hash_to_scalar` now takes a `domain: impl Into<Option<[u8; 32]>>`
   parameter. Pass `None` for the byte-compatible legacy construction, or a
@@ -16,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `JubJubExtended::is_on_curve` returns false instead of panicking for a
+  zero `Z` coordinate [#168]
 - Prevent domain-separated `hash_to_scalar` calls from aliasing legacy inputs
   with the same domain prefix [#158]
 
@@ -264,6 +267,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#168]: https://github.com/dusk-network/jubjub/issues/168
 [#164]: https://github.com/dusk-network/jubjub/issues/164
 [#158]: https://github.com/dusk-network/jubjub/issues/158
 [#3596]: https://github.com/dusk-network/rusk/issues/3596

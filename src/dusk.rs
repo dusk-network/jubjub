@@ -350,13 +350,13 @@ impl JubJubExtended {
     /// Returns true if this point is on the curve. This should always return
     /// true unless an "unchecked" API was used.
     pub fn is_on_curve(&self) -> Choice {
-        let affine = JubJubAffine::from(*self);
-
-        (((self.z != Fq::zero())
-            && affine.is_on_curve().into()
-            && (affine.u * affine.v * self.z == self.t1 * self.t2))
-            as u8)
-            .into()
+        // Check the projective curve equation and extended-coordinate
+        // relation without normalizing: V² - U² = Z² + dT², UV = ZT.
+        let t = self.t1 * self.t2;
+        !self.z.ct_eq(&Fq::zero())
+            & (self.v.square() - self.u.square())
+                .ct_eq(&(self.z.square() + EDWARDS_D * t.square()))
+            & (self.u * self.v).ct_eq(&(self.z * t))
     }
 }
 
@@ -459,6 +459,61 @@ fn test_is_on_curve() {
         BlsScalar::from(2),
     );
     assert!(!bool::from(extended_invalid.is_on_curve()));
+}
+
+#[test]
+fn test_extended_curve_representations() {
+    let zero = Fq::zero();
+    let degenerate =
+        JubJubExtended::from_raw_unchecked(zero, zero, zero, zero, zero);
+    assert!(!bool::from(degenerate.is_on_curve()));
+
+    // Negating T preserves the curve equation but breaks UV = ZT.
+    let mut invalid_t = GENERATOR_EXTENDED;
+    invalid_t.t1 = -invalid_t.t1;
+    assert!(!bool::from(invalid_t.is_on_curve()));
+
+    let torsion = JubJubAffine::from_raw_unchecked(Fq::zero(), -Fq::one());
+    for point in [
+        JubJubExtended::identity(),
+        GENERATOR_EXTENDED,
+        GENERATOR_NUMS_EXTENDED,
+        torsion.into(),
+    ] {
+        let bytes = JubJubAffine::from(point).to_bytes();
+        for scale in [Fq::one(), Fq::from(2), -Fq::one()] {
+            let scaled = JubJubExtended::from_raw_unchecked(
+                point.u * scale,
+                point.v * scale,
+                point.z * scale,
+                point.t1 * scale,
+                point.t2,
+            );
+            assert!(bool::from(scaled.is_on_curve()));
+            assert_eq!(JubJubAffine::from(scaled).to_bytes(), bytes);
+
+            // Compare with the independent affine-based predicate for every
+            // coordinate mutation where normalization is defined.
+            for coordinate in 0..5 {
+                let mut altered = scaled;
+                let fields = [
+                    &mut altered.u,
+                    &mut altered.v,
+                    &mut altered.z,
+                    &mut altered.t1,
+                    &mut altered.t2,
+                ];
+                *fields[coordinate] += Fq::one();
+                let expected =
+                    altered.z != Fq::zero() && altered.is_on_curve_vartime();
+                assert_eq!(bool::from(altered.is_on_curve()), expected);
+            }
+
+            let mut invalid = scaled;
+            invalid.z = Fq::zero();
+            assert!(!bool::from(invalid.is_on_curve()));
+        }
+    }
 }
 
 #[test]
