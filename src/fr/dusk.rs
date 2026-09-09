@@ -17,6 +17,72 @@ use crate::util::{adc, sbb};
 #[cfg(feature = "zeroize")]
 impl zeroize::DefaultIsZeroes for Fr {}
 
+#[cfg(feature = "rkyv-impl")]
+mod archive {
+    use core::{error, fmt};
+
+    use bytecheck::{CheckBytes, ErrorBox, TupleStructCheckError};
+    use rkyv::Archived;
+
+    use super::{sbb, MODULUS};
+    use crate::fr::ArchivedFr;
+
+    #[derive(Debug)]
+    struct NonCanonicalScalar;
+
+    impl fmt::Display for NonCanonicalScalar {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("scalar is not canonical")
+        }
+    }
+
+    impl error::Error for NonCanonicalScalar {}
+
+    impl<C: ?Sized> CheckBytes<C> for ArchivedFr
+    where
+        Archived<[u64; 4]>: CheckBytes<C>,
+    {
+        type Error = TupleStructCheckError;
+
+        // bytecheck 0.6 requires an unsafe fn and has no safe custom-validation
+        // hook; keep the exception to the crate's unsafe-code deny here only.
+        #[allow(unsafe_code)]
+        unsafe fn check_bytes<'a>(
+            value: *const Self,
+            context: &mut C,
+        ) -> Result<&'a Self, Self::Error> {
+            // SAFETY: The caller guarantees alignment and space for ArchivedFr.
+            // Validate its only field before constructing a reference.
+            let archived = unsafe {
+                <Archived<[u64; 4]>>::check_bytes(
+                    &raw const (*value).0,
+                    context,
+                )
+            }
+            .map_err(|error| TupleStructCheckError {
+                field_index: 0,
+                inner: ErrorBox::new(error),
+            })?;
+            let limbs = archived.map(u64::from);
+            let borrow = limbs
+                .iter()
+                .zip(MODULUS.0)
+                .fold(0, |borrow, (&limb, modulus)| {
+                    sbb(limb, modulus, borrow).1
+                });
+            if borrow == 0 {
+                return Err(TupleStructCheckError {
+                    field_index: 0,
+                    inner: ErrorBox::new(NonCanonicalScalar),
+                });
+            }
+            // SAFETY: The only field is valid and its Montgomery limbs are
+            // canonical. Preserve them without converting the representation.
+            Ok(unsafe { &*value })
+        }
+    }
+}
+
 impl Fr {
     /// Creates a `Fr` from arbitrary bytes by hashing the input with BLAKE2b
     /// into a 512-bits number, and then converting the number into its scalar

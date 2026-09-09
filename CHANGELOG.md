@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject non-canonical scalar limbs during checked RKYV deserialization [#142]
 - Preserve integer carries in scalar WNAF decomposition [#169]
 - `JubJubExtended::is_on_curve` returns false instead of panicking for a
   zero `Z` coordinate [#168]
@@ -278,6 +279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#3596]: https://github.com/dusk-network/rusk/issues/3596
 [#149]: https://github.com/dusk-network/jubjub/issues/149
 [#143]: https://github.com/dusk-network/jubjub/issues/143
+[#142]: https://github.com/dusk-network/jubjub/issues/142
 [#137]: https://github.com/dusk-network/jubjub/issues/137
 [#135]: https://github.com/dusk-network/jubjub/issues/135
 [#129]: https://github.com/dusk-network/jubjub/issues/129

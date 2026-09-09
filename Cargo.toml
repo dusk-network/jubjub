@@ -109,3 +109,7 @@ harness = false
 [[bench]]
 name = "point_bench"
 harness = false
+
+[[test]]
+name = "archive"
+required-features = ["rkyv-impl", "rkyv/validation"]
