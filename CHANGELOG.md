@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Limit `compute_windowed_naf` windows to `2..=8` [#169]
+- Limit `mods_2_pow_k` windows to `1..=8` [#169]
+- Limit `mod_2_pow_k` bit counts to `0..=8` [#169]
 - Make `JubJubExtended::is_on_curve` constant-time [#168]
 - Raise the minimum supported Rust version to 1.96.1 [#164]
 - `hash_to_scalar` now takes a `domain: impl Into<Option<[u8; 32]>>`
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Preserve integer carries in scalar WNAF decomposition [#169]
 - `JubJubExtended::is_on_curve` returns false instead of panicking for a
   zero `Z` coordinate [#168]
 - Prevent domain-separated `hash_to_scalar` calls from aliasing legacy inputs
@@ -267,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#169]: https://github.com/dusk-network/jubjub/issues/169
 [#168]: https://github.com/dusk-network/jubjub/issues/168
 [#164]: https://github.com/dusk-network/jubjub/issues/164
 [#158]: https://github.com/dusk-network/jubjub/issues/158

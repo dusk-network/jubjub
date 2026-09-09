@@ -12,7 +12,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
 
 use super::{Fr, MODULUS, R2};
-use crate::util::sbb;
+use crate::util::{adc, sbb};
 
 #[cfg(feature = "zeroize")]
 impl zeroize::DefaultIsZeroes for Fr {}
@@ -122,30 +122,30 @@ impl Fr {
         self.0[0] % 2 == 0
     }
 
-    /// Compute the result from `Scalar (mod 2^k)`.
+    /// Returns the low `k` bits of the internal limb representation.
     ///
     /// # Panics
     ///
-    /// If the given k is > 32 (5 bits) as the value gets
-    /// greater than the limb.  
+    /// Panics if `k > 8`, since the result must fit in a byte.
     pub fn mod_2_pow_k(&self, k: u8) -> u8 {
+        assert!(k <= 8, "bit count must not exceed 8");
         (self.0[0] & ((1 << k) - 1)) as u8
     }
 
-    /// Compute the result from `Scalar (mods k)`.
+    /// Returns the balanced residue of the internal limbs modulo `2^w`.
+    /// This operation is variable-time.
     ///
     /// # Panics
     ///
-    /// If the given `k > 32 (5 bits)` || `k == 0` as the value gets
-    /// greater than the limb.   
+    /// Panics unless `1 <= w <= 8`.
     pub fn mods_2_pow_k(&self, w: u8) -> i8 {
-        assert!(w < 32u8);
-        let modulus = self.mod_2_pow_k(w) as i8;
-        let two_pow_w_minus_one = 1i8 << (w - 1);
-
-        match modulus >= two_pow_w_minus_one {
-            false => modulus,
-            true => modulus - ((1u8 << w) as i8),
+        assert!((1..=8).contains(&w), "window width must be in 1..=8");
+        let residue = i16::from(self.mod_2_pow_k(w));
+        let modulus = 1i16 << w;
+        if residue >= modulus / 2 {
+            (residue - modulus) as i8
+        } else {
+            residue as i8
         }
     }
 
@@ -158,38 +158,40 @@ impl Fr {
     ///     -2^{w-1} < wnaf\[i\] < 2^{w-1}
     /// and
     ///     wnaf\[i\] * wnaf\[i+1\] = 0
+    ///
+    /// This operation is variable-time and must not be used where scalar
+    /// secrecy requires constant-time execution.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless `2 <= width <= 8`.
     pub fn compute_windowed_naf(&self, width: u8) -> [i8; 256] {
+        assert!((2..=8).contains(&width), "window width must be in 2..=8");
         let mut k = self.reduce();
         let mut i = 0;
-        let one = Fr::one().reduce();
         let mut res = [0i8; 256];
 
-        while k >= one {
+        while k.0 != [0; 4] {
             if !k.is_even() {
                 let ki = k.mods_2_pow_k(width);
                 res[i] = ki;
-                k -= fr_raw_from_i8(ki);
-            } else {
-                res[i] = 0i8;
-            };
+                // k is an integer, not a field element: carry must not reduce
+                // it modulo r. The 252-bit scalar leaves room for this carry.
+                if ki < 0 {
+                    let mut carry = u64::from(ki.unsigned_abs());
+                    for limb in &mut k.0 {
+                        (*limb, carry) = adc(*limb, 0, carry);
+                    }
+                } else {
+                    // A positive digit is the low width bits, so no borrow.
+                    k.0[0] -= ki as u64;
+                }
+            }
 
             k.divn(1u32);
             i += 1;
         }
         res
-    }
-}
-
-/// Convert a signed byte to a raw-form `Fr` for internal WNAF arithmetic.
-///
-/// This deliberately produces raw form (no Montgomery conversion) because
-/// `compute_windowed_naf` operates entirely in raw form.
-fn fr_raw_from_i8(val: i8) -> Fr {
-    let abs = Fr([val.unsigned_abs() as u64, 0u64, 0u64, 0u64]);
-    if val < 0 {
-        -abs
-    } else {
-        abs
     }
 }
 
@@ -242,6 +244,8 @@ impl PartialOrd for Fr {
 /// **not** correspond to the canonical numerical ordering of field
 /// elements. Two scalars that are adjacent in the field may not be
 /// adjacent under this ordering, and vice versa.
+/// Comparison is variable-time and must not be used to order secret scalars
+/// where constant-time execution is required.
 impl Ord for Fr {
     fn cmp(&self, other: &Self) -> Ordering {
         let a = self;
