@@ -28,8 +28,7 @@ use crate::util::{adc, mac, sbb};
 #[derive(Clone, Copy, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
-    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
 )]
 pub struct Fr(pub(crate) [u64; 4]);
 

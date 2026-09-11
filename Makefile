@@ -4,6 +4,8 @@ help: ## Display this help screen
 test: ## Run tests (std + no_std)
 	@cargo test --features=zeroize,serde
 	@cargo test --no-default-features
+	@cargo test --all-features --features=rkyv/size_32,rkyv/validation
+	@cargo test --test archive --features=rkyv-impl,rkyv/size_32,rkyv/validation,rkyv/archive_be
 
 clippy: ## Run clippy
 	@cargo clippy --all-features --features=rkyv/size_32 -- -D warnings
