@@ -182,6 +182,7 @@ impl Fr {
                     for limb in &mut k.0 {
                         (*limb, carry) = adc(*limb, 0, carry);
                     }
+                    debug_assert_eq!(carry, 0);
                 } else {
                     // A positive digit is the low width bits, so no borrow.
                     k.0[0] -= ki as u64;
