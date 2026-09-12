@@ -19,6 +19,11 @@ macro_rules! checked_archive {
             /// requirements must be checked by the caller. Existing
             /// structural `CheckBytes`, layouts and coordinates are
             /// unchanged; no normalization occurs on return.
+            ///
+            /// Generic `rkyv::from_bytes::<Self>` and
+            /// `rkyv::check_archived_root::<Self>` validate representation
+            /// only, not curve or subgroup invariants. They require a
+            /// trusted source or separate semantic checks before use.
             pub fn from_archive_bytes(bytes: &[u8]) -> Result<Self, Error> {
                 let point = rkyv::from_bytes::<Self>(bytes)
                     .map_err(|_| Error::InvalidData)?;
