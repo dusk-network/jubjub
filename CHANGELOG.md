@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add opt-in strict affine, extended and subgroup archive decoders under `rkyv-validation` [#142].
+
 ### Changed
 
 - Limit `compute_windowed_naf` windows to `2..=8` [#169]

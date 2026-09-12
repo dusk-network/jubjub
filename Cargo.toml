@@ -23,6 +23,9 @@ exclude = [
 
 [dependencies.dusk-bls12_381]
 version = "0.14"
+# Draft-only pin: replace with a release containing canonical archive checks.
+git = "https://github.com/dusk-network/bls12_381"
+rev = "f0c14bb82b02a8117e4a2922d8840f1bd09b71d0"
 default-features = false
 
 [dependencies.ff]
@@ -96,6 +99,7 @@ default = ["alloc", "bits"]
 alloc = ["ff/alloc", "group/alloc"]
 bits = ["ff/bits"]
 rkyv-impl = ["bytecheck", "dusk-bls12_381/rkyv-impl", "rkyv"]
+rkyv-validation = ["rkyv-impl", "rkyv/validation"]
 serde = ["serde/alloc", "hex/alloc"]
 
 [[bench]]
