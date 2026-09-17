@@ -128,19 +128,35 @@ fn hash_inputs_ignore_projective_scaling() {
 fn niels_arithmetic_matches_scalar_arithmetic() {
     use group::Curve;
 
+    // Keep both inputs and expectations independent of Niels multiplication.
+    fn reference_mul(scalar: Fr) -> ExtendedPoint {
+        let mut point = GENERATOR_EXTENDED;
+        let mut product = ExtendedPoint::identity();
+        for byte in scalar.to_bytes() {
+            for bit in 0..8 {
+                if byte & (1 << bit) != 0 {
+                    product += point;
+                }
+                point = point.double();
+            }
+        }
+        product
+    }
+
     let scalars = [Fr::zero(), Fr::one(), -Fr::one(), Fr::from(7)];
-    let points = scalars.map(|scalar| GENERATOR_EXTENDED * scalar);
+    let points = scalars.map(reference_mul);
+    assert_eq!(points[1], GENERATOR_EXTENDED);
     let mut affine = [AffinePoint::identity(); 4];
     <ExtendedPoint as Curve>::batch_normalize(&points, &mut affine);
     for (i, point) in points.into_iter().enumerate() {
         assert_eq!(affine[i], <ExtendedPoint as Curve>::to_affine(&point));
         for (j, scalar) in scalars.into_iter().enumerate() {
-            let difference = GENERATOR_EXTENDED * (scalars[i] - scalar);
+            let difference = reference_mul(scalars[i] - scalar);
             assert_eq!(point - points[j], difference);
             assert_eq!(point - affine[j], difference);
             assert_eq!(point - points[j].to_niels(), difference);
             assert_eq!(point - affine[j].to_niels(), difference);
-            let product = GENERATOR_EXTENDED * (scalars[i] * scalar);
+            let product = reference_mul(scalars[i] * scalar);
             let mut bits = scalar.to_bytes();
             bits[31] |= 0xf0; // multiply_bits deliberately ignores these bits.
             assert_eq!(point.to_niels().multiply_bits(&bits), product);
