@@ -1,5 +1,5 @@
 use dusk_jubjub::{
-    AffineNielsPoint, AffinePoint, ExtendedNielsPoint, ExtendedPoint, Fr,
+    AffineNielsPoint, AffinePoint, ExtendedNielsPoint, ExtendedPoint, Fq, Fr,
     SubgroupPoint, GENERATOR_EXTENDED,
 };
 
@@ -129,5 +129,41 @@ fn scalar_archive_requires_canonical_montgomery_limbs() {
         assert!(rkyv::from_bytes::<[Fr; 2]>(&bytes).is_err());
         let bytes = rkyv::to_bytes::<_, 256>(&vec![[0u64; 4], limbs]).unwrap();
         assert!(rkyv::from_bytes::<Vec<Fr>>(&bytes).is_err());
+    }
+}
+
+#[test]
+fn base_field_archives_require_canonical_montgomery_limbs() {
+    let modulus: [u64; 4] = [
+        0xffff_ffff_0000_0001,
+        0x53bd_a402_fffe_5bfe,
+        0x3339_d808_09a1_d805,
+        0x73ed_a753_299d_7d48,
+    ];
+    let mut below = modulus;
+    below[0] -= 1;
+    for limbs in [[0; 4], [1, 0, 0, 0], below] {
+        let bytes = rkyv::to_bytes::<_, 256>(&limbs).unwrap();
+        let scalar = rkyv::from_bytes::<Fq>(&bytes).unwrap();
+        assert_eq!(
+            bytes.as_slice(),
+            rkyv::to_bytes::<_, 256>(&scalar).unwrap().as_slice()
+        );
+    }
+    let mut above = modulus;
+    above[0] += 1;
+    for limbs in [modulus, above, [u64::MAX; 4]] {
+        let invalid = rkyv::to_bytes::<_, 256>(&limbs).unwrap();
+        assert!(rkyv::from_bytes::<Fq>(&invalid).is_err());
+        // Check every embedded base-field coordinate without changing the
+        // point archive's layout or relying on curve/subgroup validation.
+        for coordinate in 0..5 {
+            let mut bytes =
+                rkyv::to_bytes::<_, 256>(&GENERATOR_EXTENDED).unwrap();
+            assert_eq!(bytes.len(), 5 * invalid.len());
+            let offset = coordinate * invalid.len();
+            bytes[offset..offset + invalid.len()].copy_from_slice(&invalid);
+            assert!(rkyv::from_bytes::<ExtendedPoint>(&bytes).is_err());
+        }
     }
 }

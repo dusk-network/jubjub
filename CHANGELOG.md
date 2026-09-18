@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Update `dusk-bls12_381` to `0.15`, including the re-exported
+  `BlsScalar`/`Fq` API and canonical base-field validation in checked RKYV archives.
 - Limit `compute_windowed_naf` windows to `2..=8` [#169]
 - Limit `mods_2_pow_k` windows to `1..=8` [#169]
 - Limit `mod_2_pow_k` bit counts to `0..=8` [#169]
