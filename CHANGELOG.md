@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Update `dusk-bls12_381` to `0.16` [#183]
 - Change `dhke` to return `CtOption<JubJubAffine>` [#176]
 - Limit `compute_windowed_naf` windows to `2..=8` [#169]
 - Limit `mods_2_pow_k` windows to `1..=8` [#169]
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject non-canonical base-field limbs during checked RKYV deserialization [#183]
 - Reject identity, small-order and off-curve public points in `dhke`, and
   clear the torsion of mixed-order ones [#176]
 - Zeroize the entropy buffer of `Fr::random` with the `zeroize` feature [#177]
@@ -276,6 +278,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#183]: https://github.com/dusk-network/jubjub/issues/183
 [#176]: https://github.com/dusk-network/jubjub/issues/176
 [#177]: https://github.com/dusk-network/jubjub/issues/177
 [#169]: https://github.com/dusk-network/jubjub/issues/169
