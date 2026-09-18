@@ -22,7 +22,7 @@ exclude = [
 ]
 
 [dependencies.dusk-bls12_381]
-version = "0.14"
+version = "0.15"
 default-features = false
 
 [dependencies.ff]
