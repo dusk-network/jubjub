@@ -701,13 +701,8 @@ impl Field for Fr {
     const ZERO: Self = Self::zero();
     const ONE: Self = Self::one();
 
-    fn random(mut rng: impl RngCore) -> Self {
-        let mut buf = [0; 64];
-        rng.fill_bytes(&mut buf);
-        let scalar = Self::from_bytes_wide(&buf);
-        #[cfg(feature = "zeroize")]
-        zeroize::Zeroize::zeroize(&mut buf);
-        scalar
+    fn random(rng: impl RngCore) -> Self {
+        Self::random_wide(rng)
     }
 
     #[must_use]

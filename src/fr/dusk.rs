@@ -10,6 +10,7 @@ use core::ops::{Index, IndexMut};
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
+use rand_core::RngCore;
 
 use super::{Fr, MODULUS, R2};
 use crate::util::{adc, sbb};
@@ -84,6 +85,17 @@ mod archive {
 }
 
 impl Fr {
+    /// Reduces 64 random bytes to a scalar, wiping them afterwards with the
+    /// `zeroize` feature.
+    pub(crate) fn random_wide(mut rng: impl RngCore) -> Self {
+        let mut buf = [0; 64];
+        rng.fill_bytes(&mut buf);
+        let scalar = Self::from_bytes_wide(&buf);
+        #[cfg(feature = "zeroize")]
+        zeroize::Zeroize::zeroize(&mut buf);
+        scalar
+    }
+
     /// Creates a `Fr` from arbitrary bytes by hashing the input with BLAKE2b
     /// into a 512-bits number, and then converting the number into its scalar
     /// representation by reducing it by the modulo.
