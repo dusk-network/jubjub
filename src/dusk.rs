@@ -25,9 +25,25 @@ impl zeroize::DefaultIsZeroes for JubJubAffine {}
 #[cfg(feature = "zeroize")]
 impl zeroize::DefaultIsZeroes for JubJubExtended {}
 
-/// Compute a shared secret `secret · public` using DHKE protocol
-pub fn dhke(secret: &Fr, public: &JubJubExtended) -> JubJubAffine {
-    public.mul(secret).into()
+/// `8⁻¹ mod r`, used to clear the cofactor in [`dhke`] without changing the
+/// result for prime-order points.
+const COFACTOR_INV: Fr = Fr::from_raw([
+    0x5a12e1cbdadee597,
+    0x14cd041279990210,
+    0x20cce76020268760,
+    0x01cfb69d4ca675f5,
+]);
+
+/// Compute a shared secret `secret · public` using DHKE protocol.
+///
+/// The small-order component of `public` is cleared, so the result never
+/// depends on `secret` modulo the cofactor, and it is `secret · public` for
+/// a prime-order `public`. Returns none if `public` is the identity or of
+/// small order.
+pub fn dhke(secret: &Fr, public: &JubJubExtended) -> CtOption<JubJubAffine> {
+    let public = public.mul_by_cofactor();
+    let shared = public.mul(secret * COFACTOR_INV).into();
+    CtOption::new(shared, !public.is_identity())
 }
 
 /// Use a fixed generator point.
@@ -370,6 +386,32 @@ fn test_dhke_small_subgroup_protection() {
         <JubJubAffine as Serializable<32>>::from_bytes(&torsion_bytes).is_err(),
         "from_bytes must reject small-subgroup points"
     );
+}
+
+#[test]
+fn test_dhke_rejects_small_order_peers() {
+    let secret = Fr::from(9u64);
+    // A point of exact order 8, decoded without the subgroup check.
+    let bytes = [
+        0xdd, 0x96, 0xf4, 0xef, 0x68, 0x20, 0x0d, 0xff, 0xa1, 0xa4, 0x84, 0xf3,
+        0x90, 0xee, 0x06, 0x91, 0x66, 0x72, 0x4d, 0xad, 0x35, 0x30, 0xa1, 0x16,
+        0x2e, 0x98, 0x66, 0x19, 0xb2, 0xbd, 0x58, 0xc9,
+    ];
+    let torsion =
+        JubJubExtended::from(JubJubAffine::from_bytes(bytes).unwrap());
+    assert!(bool::from(
+        torsion.is_small_order() & !torsion.is_identity()
+    ));
+
+    for public in [JubJubExtended::identity(), torsion] {
+        assert!(bool::from(dhke(&secret, &public).is_none()));
+    }
+
+    // Prime-order points keep `secret · public`; torsion is cleared.
+    let public = GENERATOR_EXTENDED * Fr::from(42u64);
+    let shared = JubJubAffine::from(public * secret);
+    assert_eq!(dhke(&secret, &public).unwrap(), shared);
+    assert_eq!(dhke(&secret, &(public + torsion)).unwrap(), shared);
 }
 
 #[test]

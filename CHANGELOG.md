@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Return `CtOption` from `dhke`, rejecting identity and small-order public
+  points and clearing the small-order component of mixed-order ones [#176]
 - Limit `compute_windowed_naf` windows to `2..=8` [#169]
 - Limit `mods_2_pow_k` windows to `1..=8` [#169]
 - Limit `mod_2_pow_k` bit counts to `0..=8` [#169]
@@ -273,6 +275,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#176]: https://github.com/dusk-network/jubjub/issues/176
 [#177]: https://github.com/dusk-network/jubjub/issues/177
 [#169]: https://github.com/dusk-network/jubjub/issues/169
 [#168]: https://github.com/dusk-network/jubjub/issues/168
