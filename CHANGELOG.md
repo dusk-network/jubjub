@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Zeroize the entropy buffer of `Fr::random` with the `zeroize` feature [#177]
 - Reject non-canonical scalar limbs during checked RKYV deserialization [#142]
 - Preserve integer carries in scalar WNAF decomposition [#169]
 - `JubJubExtended::is_on_curve` returns false instead of panicking for a
@@ -272,6 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#177]: https://github.com/dusk-network/jubjub/issues/177
 [#169]: https://github.com/dusk-network/jubjub/issues/169
 [#168]: https://github.com/dusk-network/jubjub/issues/168
 [#164]: https://github.com/dusk-network/jubjub/issues/164

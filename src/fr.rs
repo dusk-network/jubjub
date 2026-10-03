@@ -704,7 +704,10 @@ impl Field for Fr {
     fn random(mut rng: impl RngCore) -> Self {
         let mut buf = [0; 64];
         rng.fill_bytes(&mut buf);
-        Self::from_bytes_wide(&buf)
+        let scalar = Self::from_bytes_wide(&buf);
+        #[cfg(feature = "zeroize")]
+        zeroize::Zeroize::zeroize(&mut buf);
+        scalar
     }
 
     #[must_use]
