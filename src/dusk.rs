@@ -38,10 +38,18 @@ const COFACTOR_INV: Fr = Fr::from_raw([
 ///
 /// The small-order component of `public` is cleared, so the result never
 /// depends on `secret` modulo the cofactor, and it is `secret · public` for
-/// a prime-order `public`. Returns none if `public` is the identity or of
-/// small order.
+/// a prime-order `public`. Returns none if `public` is not on the curve, is
+/// the identity, or is of small order.
 pub fn dhke(secret: &Fr, public: &JubJubExtended) -> CtOption<JubJubAffine> {
-    let public = public.mul_by_cofactor();
+    // An off-curve `public` is replaced by the identity before any group
+    // operation, so the result is none, and the conversion to affine below
+    // cannot meet a zero `Z`.
+    let public = JubJubExtended::conditional_select(
+        &JubJubExtended::identity(),
+        public,
+        public.is_on_curve(),
+    )
+    .mul_by_cofactor();
     let shared = public.mul(secret * COFACTOR_INV).into();
     CtOption::new(shared, !public.is_identity())
 }
@@ -412,6 +420,19 @@ fn test_dhke_rejects_small_order_peers() {
     let shared = JubJubAffine::from(public * secret);
     assert_eq!(dhke(&secret, &public).unwrap(), shared);
     assert_eq!(dhke(&secret, &(public + torsion)).unwrap(), shared);
+}
+
+#[test]
+fn test_dhke_rejects_off_curve_points() {
+    let (u, v) = (GENERATOR.u, GENERATOR.v + BlsScalar::one());
+    let zero = BlsScalar::zero();
+    for public in [
+        JubJubExtended::from_raw_unchecked(u, v, BlsScalar::one(), u, v),
+        JubJubExtended::from_raw_unchecked(zero, zero, zero, zero, zero),
+    ] {
+        assert!(!bool::from(public.is_on_curve()));
+        assert!(bool::from(dhke(&Fr::from(9u64), &public).is_none()));
+    }
 }
 
 #[test]
