@@ -131,8 +131,8 @@ fn test_dhke() {
         let a_g = g * a;
         let b_g = g * b;
 
-        assert_eq!(dhke(&a, &b_g), dhke(&b, &a_g));
-        assert_ne!(dhke(&a, &b_g), dhke(&b, &b_g));
+        assert_eq!(dhke(&a, &b_g).unwrap(), dhke(&b, &a_g).unwrap());
+        assert_ne!(dhke(&a, &b_g).unwrap(), dhke(&b, &b_g).unwrap());
     }
 }
 
