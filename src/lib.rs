@@ -35,6 +35,7 @@
 // Upstream zkcrypto code triggers these lints on current Rust.
 #![allow(clippy::needless_lifetimes)]
 #![allow(clippy::useless_conversion)]
+#![allow(clippy::manual_is_multiple_of)]
 #![allow(unused_attributes)]
 #![allow(rustdoc::redundant_explicit_links)]
 

@@ -501,10 +501,10 @@ fn test_is_on_curve() {
 
     let mut rng = rand_core::OsRng;
     for _ in 0..1000 {
-        let affine = GENERATOR * &Fr::random(&mut rng);
+        let affine = GENERATOR * Fr::random(&mut rng);
         assert!(bool::from(affine.is_on_curve()));
 
-        let extended = GENERATOR_EXTENDED * &Fr::random(&mut rng);
+        let extended = GENERATOR_EXTENDED * Fr::random(&mut rng);
         assert!(bool::from(extended.is_on_curve()));
     }
 
