@@ -93,6 +93,10 @@ pub const MODULUS: Fr = Fr([
 
 /// The modulus as u32 limbs.
 #[cfg(not(target_pointer_width = "64"))]
+#[allow(
+    dead_code,
+    reason = "upstream zkcrypto code uses it only with the bits feature"
+)]
 const MODULUS_LIMBS_32: [u32; 8] = [
     0xd6f7_2cb7,
     0xd097_0e5e,

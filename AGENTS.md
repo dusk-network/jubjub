@@ -16,16 +16,13 @@ directly.
 
 ## Commands
 
-```bash
-make test      # Run tests (std + no_std)
-make clippy    # Run clippy
-make fmt       # Format code (requires nightly)
-make check     # Type-check
-make doc       # Generate docs
-make no-std    # Verify no_std + WASM compatibility
-make clean     # Clean build artifacts
-cargo bench    # Run benchmarks
-```
+Run `make help` to list all available targets. Key points:
+
+- **Always use `make` targets** — the Makefile is the source of truth
+  for build, test, and clippy commands.
+- `make fmt` and `make cq` need the nightly toolchain for `rustfmt`.
+- `make build-benches` only builds the benchmarks; run them with
+  `cargo bench`.
 
 ## Architecture
 

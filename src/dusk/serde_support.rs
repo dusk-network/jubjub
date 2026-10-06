@@ -94,7 +94,7 @@ mod tests {
         let wrong_encoded = "wrong-encoded";
 
         let affine_point: Result<AffinePoint, _> =
-            serde_json::from_str(&wrong_encoded);
+            serde_json::from_str(wrong_encoded);
         assert!(affine_point.is_err());
     }
 
@@ -103,7 +103,7 @@ mod tests {
         let length_33_enc = "\"e4ab9de40283a85d6ea0cd0120500697d8b01c71b7b4b520292252d20937000631\"";
 
         let affine_point: Result<AffinePoint, _> =
-            serde_json::from_str(&length_33_enc);
+            serde_json::from_str(length_33_enc);
         assert!(affine_point.is_err());
     }
 
@@ -112,7 +112,7 @@ mod tests {
         let length_31_enc = "\"1751c37a1dca7aa4c048fcc6177194243edc3637bae042e167e4285945e046\"";
 
         let affine_point: Result<AffinePoint, _> =
-            serde_json::from_str(&length_31_enc);
+            serde_json::from_str(length_31_enc);
         assert!(affine_point.is_err());
     }
 }

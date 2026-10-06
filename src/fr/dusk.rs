@@ -197,7 +197,7 @@ impl Fr {
 
     /// Evaluate if a `Scalar, from Fr` is even or not.
     pub fn is_even(&self) -> bool {
-        self.0[0] % 2 == 0
+        self.0[0].is_multiple_of(2)
     }
 
     /// Returns the low `k` bits of the internal limb representation.
