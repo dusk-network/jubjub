@@ -2,9 +2,6 @@
 //! $\mathbb{F}_r$ where `r =
 //! 0x0e7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb7`
 
-// Upstream zkcrypto code triggers this lint on current Rust.
-#![allow(clippy::needless_borrow)]
-
 mod dusk;
 
 use core::convert::TryInto;
@@ -151,6 +148,7 @@ const DELTA: Fr = Fr([
     0x0e30_3e96_f8cb_47bd,
 ]);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a> Neg for &'a Fr {
     type Output = Fr;
 
@@ -169,6 +167,7 @@ impl Neg for Fr {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b Fr> for &'a Fr {
     type Output = Fr;
 
@@ -178,6 +177,7 @@ impl<'a, 'b> Sub<&'b Fr> for &'a Fr {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b Fr> for &'a Fr {
     type Output = Fr;
 
@@ -187,6 +187,7 @@ impl<'a, 'b> Add<&'b Fr> for &'a Fr {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Mul<&'b Fr> for &'a Fr {
     type Output = Fr;
 
@@ -364,6 +365,10 @@ impl Fr {
 
     /// Converts from an integer represented in little endian
     /// into its (congruent) `Fr` representation.
+    #[allow(
+        clippy::needless_borrow,
+        reason = "the borrow picks the const `Fr::mul`, not the `Mul` impl"
+    )]
     pub const fn from_raw(val: [u64; 4]) -> Self {
         (&Fr(val)).mul(&R2)
     }
@@ -562,6 +567,10 @@ impl Fr {
 
     #[inline]
     #[allow(clippy::too_many_arguments)]
+    #[allow(
+        clippy::needless_borrow,
+        reason = "the borrow picks the const `Fr::sub`, not the `Sub` impl"
+    )]
     const fn montgomery_reduce(
         r0: u64,
         r1: u64,
@@ -657,6 +666,10 @@ impl Fr {
 
     /// Adds this element to another element.
     #[inline]
+    #[allow(
+        clippy::needless_borrow,
+        reason = "the borrow picks the const `Fr::sub`, not the `Sub` impl"
+    )]
     pub const fn add(&self, rhs: &Self) -> Self {
         let (d0, carry) = adc(self.0[0], rhs.0[0], 0);
         let (d1, carry) = adc(self.0[1], rhs.0[1], carry);
@@ -709,11 +722,13 @@ impl Field for Fr {
         Self::random_wide(rng)
     }
 
+    #[allow(unused_attributes, reason = "upstream zkcrypto code")]
     #[must_use]
     fn square(&self) -> Self {
         self.square()
     }
 
+    #[allow(unused_attributes, reason = "upstream zkcrypto code")]
     #[must_use]
     fn double(&self) -> Self {
         self.double()

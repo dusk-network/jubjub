@@ -32,12 +32,6 @@
 // In our library, some of the arithmetic will necessarily involve various
 // binary operators, and so this lint is triggered unnecessarily.
 #![allow(clippy::suspicious_arithmetic_impl)]
-// Upstream zkcrypto code triggers these lints on current Rust.
-#![allow(clippy::needless_lifetimes)]
-#![allow(clippy::useless_conversion)]
-#![allow(clippy::manual_is_multiple_of)]
-#![allow(unused_attributes)]
-#![allow(rustdoc::redundant_explicit_links)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -266,6 +260,10 @@ impl<'a> From<&'a ExtendedPoint> for AffinePoint {
     /// as Z is always nonzero. **This requires a field inversion
     /// and so it is recommended to perform these in a batch
     /// using [`batch_normalize`](crate::batch_normalize) instead.**
+    #[allow(
+        rustdoc::redundant_explicit_links,
+        reason = "upstream zkcrypto code"
+    )]
     fn from(extended: &'a ExtendedPoint) -> AffinePoint {
         // Z coordinate is always nonzero, so this is
         // its inverse.
@@ -287,6 +285,7 @@ impl From<ExtendedPoint> for AffinePoint {
 /// This is a pre-processed version of an affine point `(u, v)`
 /// in the form `(v + u, v - u, u * v * 2d)`. This can be added to an
 /// [`ExtendedPoint`](crate::ExtendedPoint).
+#[allow(rustdoc::redundant_explicit_links, reason = "upstream zkcrypto code")]
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(
     feature = "rkyv-impl",
@@ -343,6 +342,7 @@ impl AffineNielsPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Mul<&'b Fr> for &'a AffineNielsPoint {
     type Output = ExtendedPoint;
 
@@ -442,6 +442,7 @@ impl ExtendedNielsPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Mul<&'b Fr> for &'a ExtendedNielsPoint {
     type Output = ExtendedPoint;
 
@@ -601,6 +602,7 @@ impl AffinePoint {
     /// Returns None for each element if it is not on the curve, or is
     /// non-canonical according to ZIP 216.
     #[cfg(feature = "alloc")]
+    #[allow(clippy::useless_conversion, reason = "upstream zkcrypto code")]
     pub fn batch_from_bytes(
         items: impl Iterator<Item = [u8; 32]>,
     ) -> Vec<CtOption<Self>> {
@@ -956,6 +958,7 @@ impl ExtendedPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Mul<&'b Fr> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -966,6 +969,7 @@ impl<'a, 'b> Mul<&'b Fr> for &'a ExtendedPoint {
 
 impl_binops_multiplicative!(ExtendedPoint, Fr);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b ExtendedNielsPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1005,6 +1009,7 @@ impl<'a, 'b> Add<&'b ExtendedNielsPoint> for &'a ExtendedPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b ExtendedNielsPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1027,6 +1032,7 @@ impl<'a, 'b> Sub<&'b ExtendedNielsPoint> for &'a ExtendedPoint {
 
 impl_binops_additive!(ExtendedPoint, ExtendedNielsPoint);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b AffineNielsPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1053,6 +1059,7 @@ impl<'a, 'b> Add<&'b AffineNielsPoint> for &'a ExtendedPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b AffineNielsPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1075,6 +1082,7 @@ impl<'a, 'b> Sub<&'b AffineNielsPoint> for &'a ExtendedPoint {
 
 impl_binops_additive!(ExtendedPoint, AffineNielsPoint);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b ExtendedPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1084,6 +1092,7 @@ impl<'a, 'b> Add<&'b ExtendedPoint> for &'a ExtendedPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b ExtendedPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1095,6 +1104,7 @@ impl<'a, 'b> Sub<&'b ExtendedPoint> for &'a ExtendedPoint {
 
 impl_binops_additive!(ExtendedPoint, ExtendedPoint);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b AffinePoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1104,6 +1114,7 @@ impl<'a, 'b> Add<&'b AffinePoint> for &'a ExtendedPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b AffinePoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1194,6 +1205,7 @@ pub fn batch_normalize(
     v.iter().map(|p| AffinePoint { u: p.u, v: p.v })
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Mul<&'b Fr> for &'a AffinePoint {
     type Output = ExtendedPoint;
 
@@ -1282,6 +1294,7 @@ impl Neg for &SubgroupPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b SubgroupPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1291,6 +1304,7 @@ impl<'a, 'b> Add<&'b SubgroupPoint> for &'a ExtendedPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b SubgroupPoint> for &'a ExtendedPoint {
     type Output = ExtendedPoint;
 
@@ -1302,6 +1316,7 @@ impl<'a, 'b> Sub<&'b SubgroupPoint> for &'a ExtendedPoint {
 
 impl_binops_additive!(ExtendedPoint, SubgroupPoint);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Add<&'b SubgroupPoint> for &'a SubgroupPoint {
     type Output = SubgroupPoint;
 
@@ -1311,6 +1326,7 @@ impl<'a, 'b> Add<&'b SubgroupPoint> for &'a SubgroupPoint {
     }
 }
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Sub<&'b SubgroupPoint> for &'a SubgroupPoint {
     type Output = SubgroupPoint;
 
@@ -1322,6 +1338,7 @@ impl<'a, 'b> Sub<&'b SubgroupPoint> for &'a SubgroupPoint {
 
 impl_binops_additive!(SubgroupPoint, SubgroupPoint);
 
+#[allow(clippy::needless_lifetimes, reason = "upstream zkcrypto code")]
 impl<'a, 'b> Mul<&'b Fr> for &'a SubgroupPoint {
     type Output = SubgroupPoint;
 
@@ -1335,6 +1352,7 @@ impl_binops_multiplicative!(SubgroupPoint, Fr);
 impl Group for ExtendedPoint {
     type Scalar = Fr;
 
+    #[allow(clippy::manual_is_multiple_of, reason = "upstream zkcrypto code")]
     fn random(mut rng: impl RngCore) -> Self {
         loop {
             let v = Fq::random(&mut rng);
@@ -1374,6 +1392,7 @@ impl Group for ExtendedPoint {
         self.is_identity()
     }
 
+    #[allow(unused_attributes, reason = "upstream zkcrypto code")]
     #[must_use]
     fn double(&self) -> Self {
         self.double()
@@ -1405,6 +1424,7 @@ impl Group for SubgroupPoint {
         self.0.is_identity()
     }
 
+    #[allow(unused_attributes, reason = "upstream zkcrypto code")]
     #[must_use]
     fn double(&self) -> Self {
         SubgroupPoint(self.0.double())
@@ -1903,6 +1923,7 @@ fn test_mul_consistency() {
 
 #[cfg(feature = "alloc")]
 #[test]
+#[allow(clippy::useless_conversion, reason = "upstream zkcrypto code")]
 fn test_serialization_consistency() {
     let gen = FULL_GENERATOR.mul_by_cofactor();
     let mut p = gen;
