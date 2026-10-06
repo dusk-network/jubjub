@@ -649,14 +649,14 @@ mod tests {
     #[test]
     fn serde_fr_wrong_encoded() {
         let wrong_encoded = "\"wrong-encoded\"";
-        let fr: Result<Fr, _> = serde_json::from_str(&wrong_encoded);
+        let fr: Result<Fr, _> = serde_json::from_str(wrong_encoded);
         assert!(fr.is_err());
     }
 
     #[test]
     fn serde_fr_too_long() {
         let length_33_enc = "\"e4ab9de40283a85d6ea0cd0120500697d8b01c71b7b4b520292252d20937000631\"";
-        let fr: Result<Fr, _> = serde_json::from_str(&length_33_enc);
+        let fr: Result<Fr, _> = serde_json::from_str(length_33_enc);
         assert!(fr.is_err());
     }
 
@@ -664,7 +664,7 @@ mod tests {
     fn serde_fr_too_short() {
         let length_31_enc =
             "\"1751c37a1dca7aa4c048fcc6177194243edc3637bae042e167e4285945e046\"";
-        let fr: Result<Fr, _> = serde_json::from_str(&length_31_enc);
+        let fr: Result<Fr, _> = serde_json::from_str(length_31_enc);
         assert!(fr.is_err());
     }
 }
