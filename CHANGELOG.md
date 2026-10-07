@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Remove `IndexMut` for `Fr` [#184]
 - Remove public `From<i8>` impl for `Fr` (Montgomery form invariant violation)
 
 ## [0.15.2] - 2026-02-27
@@ -282,6 +283,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#184]: https://github.com/dusk-network/jubjub/issues/184
 [#173]: https://github.com/dusk-network/jubjub/issues/173
 [#183]: https://github.com/dusk-network/jubjub/issues/183
 [#176]: https://github.com/dusk-network/jubjub/issues/176

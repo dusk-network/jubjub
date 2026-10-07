@@ -6,7 +6,7 @@
 
 use core::cmp::{Ord, Ordering, PartialOrd};
 use core::convert::TryInto;
-use core::ops::{Index, IndexMut};
+use core::ops::Index;
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
@@ -295,12 +295,6 @@ impl Index<usize> for Fr {
     type Output = u64;
     fn index(&self, _index: usize) -> &u64 {
         &(self.0[_index])
-    }
-}
-
-impl IndexMut<usize> for Fr {
-    fn index_mut(&mut self, _index: usize) -> &mut u64 {
-        &mut (self.0[_index])
     }
 }
 
