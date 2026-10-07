@@ -96,6 +96,7 @@ default = ["alloc", "bits"]
 alloc = ["ff/alloc", "group/alloc"]
 bits = ["ff/bits"]
 rkyv-impl = ["bytecheck", "dusk-bls12_381/rkyv-impl", "rkyv"]
+rkyv-validation = ["rkyv-impl", "rkyv/validation"]
 serde = ["serde/alloc", "hex/alloc"]
 
 [[bench]]

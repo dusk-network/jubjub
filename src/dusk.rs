@@ -10,6 +10,9 @@ extern crate alloc;
 #[cfg(feature = "serde")]
 pub(crate) mod serde_support;
 
+#[cfg(feature = "rkyv-validation")]
+mod archive;
+
 use core::ops::Mul;
 use ff::Field;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
