@@ -1,11 +1,38 @@
-extern crate alloc;
-
-use alloc::string::{String, ToString};
+use core::fmt;
 
 use dusk_bytes::Serializable;
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{AffinePoint, ExtendedPoint};
+
+/// Decodes a hex string of exactly `N` bytes into a stack buffer, checking
+/// the encoded length before decoding any characters.
+pub(crate) fn deserialize_hex<'de, D: Deserializer<'de>, const N: usize>(
+    deserializer: D,
+) -> Result<[u8; N], D::Error> {
+    struct Hex<const N: usize>;
+
+    impl<'de, const N: usize> Visitor<'de> for Hex<N> {
+        type Value = [u8; N];
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            write!(formatter, "a hex string encoding {N} bytes")
+        }
+
+        fn visit_str<E: Error>(self, value: &str) -> Result<Self::Value, E> {
+            self.visit_bytes(value.as_bytes())
+        }
+
+        fn visit_bytes<E: Error>(self, value: &[u8]) -> Result<Self::Value, E> {
+            let mut bytes = [0; N];
+            hex::decode_to_slice(value, &mut bytes).map_err(E::custom)?;
+            Ok(bytes)
+        }
+    }
+
+    deserializer.deserialize_str(Hex::<N>)
+}
 
 impl Serialize for AffinePoint {
     fn serialize<S: Serializer>(
@@ -21,17 +48,12 @@ impl<'de> Deserialize<'de> for AffinePoint {
     fn deserialize<D: Deserializer<'de>>(
         deserializer: D,
     ) -> Result<Self, D::Error> {
-        let s = String::deserialize(deserializer)?;
-        let decoded = hex::decode(&s).map_err(Error::custom)?;
-        let decoded_len = decoded.len();
-        let bytes: [u8; Self::SIZE] = decoded.try_into().map_err(|_| {
-            Error::invalid_length(decoded_len, &Self::SIZE.to_string().as_str())
-        })?;
-        AffinePoint::from_bytes(bytes)
-            .into_option()
-            .ok_or(Error::custom(
+        let bytes: [u8; Self::SIZE] = deserialize_hex(deserializer)?;
+        AffinePoint::from_bytes(bytes).into_option().ok_or_else(|| {
+            Error::custom(
                 "Failed to deserialize AffinePoint: invalid AffinePoint",
-            ))
+            )
+        })
     }
 }
 

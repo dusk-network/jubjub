@@ -8,7 +8,10 @@
 extern crate alloc;
 
 #[cfg(feature = "serde")]
-mod serde_support;
+pub(crate) mod serde_support;
+
+#[cfg(feature = "rkyv-validation")]
+mod archive;
 
 use core::ops::Mul;
 use ff::Field;

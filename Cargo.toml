@@ -11,7 +11,7 @@ homepage = "https://github.com/dusk-network/jubjub"
 license = "MIT/Apache-2.0"
 name = "dusk-jubjub"
 repository = "https://github.com/dusk-network/jubjub"
-version = "0.15.2"
+version = "0.16.0"
 keywords = ["cryptography", "jubjub", "zk-snarks", "ecc", "elliptic-curve"]
 categories =["algorithms", "cryptography", "science", "no-std"]
 edition = "2021"
@@ -22,7 +22,7 @@ exclude = [
 ]
 
 [dependencies.dusk-bls12_381]
-version = "0.14"
+version = "0.16"
 default-features = false
 
 [dependencies.ff]
@@ -96,6 +96,7 @@ default = ["alloc", "bits"]
 alloc = ["ff/alloc", "group/alloc"]
 bits = ["ff/bits"]
 rkyv-impl = ["bytecheck", "dusk-bls12_381/rkyv-impl", "rkyv"]
+rkyv-validation = ["rkyv-impl", "rkyv/validation"]
 serde = ["serde/alloc", "hex/alloc"]
 
 [[bench]]
