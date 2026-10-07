@@ -397,10 +397,6 @@ impl Serializable<32> for Fr {
 
 #[cfg(feature = "serde")]
 mod serde_support {
-    extern crate alloc;
-
-    use alloc::string::{String, ToString};
-
     use dusk_bytes::Serializable;
     use serde::de::Error;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -421,18 +417,11 @@ mod serde_support {
         fn deserialize<D: Deserializer<'de>>(
             deserializer: D,
         ) -> Result<Self, D::Error> {
-            let s = String::deserialize(deserializer)?;
-            let decoded = hex::decode(s).map_err(Error::custom)?;
-            let decoded_len = decoded.len();
-            let bytes: [u8; Self::SIZE] = decoded.try_into().map_err(|_| {
-                Error::invalid_length(
-                    decoded_len,
-                    &Self::SIZE.to_string().as_str(),
-                )
-            })?;
-            Fr::from_bytes(&bytes)
-                .into_option()
-                .ok_or(Error::custom("Failed to deserialize Fr: invalid Fr"))
+            let bytes: [u8; Self::SIZE] =
+                crate::dusk::serde_support::deserialize_hex(deserializer)?;
+            Fr::from_bytes(&bytes).into_option().ok_or_else(|| {
+                Error::custom("Failed to deserialize Fr: invalid Fr")
+            })
         }
     }
 }

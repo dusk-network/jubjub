@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Report fixed-size Serde hex length errors before character errors, using the
+  hex decoder errors [#173]
 - Update `dusk-bls12_381` to `0.16` [#183]
 - Change `dhke` to return `CtOption<JubJubAffine>` [#176]
 - Limit `compute_windowed_naf` windows to `2..=8` [#169]
@@ -22,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Decode fixed-size Serde hex values into stack buffers, checking the length
+  before decoding [#173]
 - Reject non-canonical base-field limbs during checked RKYV deserialization [#183]
 - Reject identity, small-order and off-curve public points in `dhke`, and
   clear the torsion of mixed-order ones [#176]
@@ -278,6 +282,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Initial fork from [`zkcrypto/jubjub`]
 
 <!-- ISSUES -->
+[#173]: https://github.com/dusk-network/jubjub/issues/173
 [#183]: https://github.com/dusk-network/jubjub/issues/183
 [#176]: https://github.com/dusk-network/jubjub/issues/176
 [#177]: https://github.com/dusk-network/jubjub/issues/177
