@@ -9,6 +9,7 @@ use dusk_jubjub::{
 use group::{Group, GroupEncoding};
 use rand_core::SeedableRng;
 use rand_xorshift::XorShiftRng;
+use subtle::{Choice, ConditionallySelectable, ConstantTimeEq};
 
 #[test]
 fn scalar_serializable_matches_canonical_encoding() {
@@ -199,5 +200,255 @@ fn scalar_field_traits() {
         if num == F::ZERO || div == F::ZERO {
             assert_eq!(root, F::ZERO);
         }
+    }
+}
+
+#[test]
+fn point_negation_and_sum() {
+    let p = GENERATOR_EXTENDED * Fr::from(7u64);
+    let q = GENERATOR_EXTENDED * Fr::from(11u64);
+    let affine = AffinePoint::from(p);
+
+    // -(u, v) = (-u, v)
+    assert_eq!((-affine).get_u(), -affine.get_u());
+    assert_eq!((-affine).get_v(), affine.get_v());
+    assert_eq!(ExtendedPoint::from(-affine), -p);
+    for neg in [-p, ExtendedPoint::from(-affine)] {
+        assert!(bool::from(neg.is_on_curve()));
+        assert_eq!(p + neg, ExtendedPoint::identity());
+        assert_eq!(q + neg, q - p);
+    }
+
+    assert_eq!([p, q].into_iter().sum::<ExtendedPoint>(), p + q);
+    assert_eq!([p, q, -p].iter().sum::<ExtendedPoint>(), q);
+    assert_eq!(
+        core::iter::empty::<ExtendedPoint>().sum::<ExtendedPoint>(),
+        ExtendedPoint::identity()
+    );
+}
+
+#[test]
+fn point_equality_compares_both_coordinates() {
+    let p = GENERATOR_EXTENDED * Fr::from(7u64);
+    let affine = AffinePoint::from(p);
+    let (u, v) = (affine.get_u(), affine.get_v());
+    assert_eq!(p, ExtendedPoint::from(affine));
+
+    // Both are on the curve, and each shares one coordinate with `p`.
+    for other in [
+        AffinePoint::from_raw_unchecked(-u, v),
+        AffinePoint::from_raw_unchecked(u, -v),
+    ] {
+        assert!(bool::from(other.is_on_curve()));
+        assert!(!bool::from(affine.ct_eq(&other)));
+        assert_ne!(affine, other);
+        assert!(!bool::from(p.ct_eq(&ExtendedPoint::from(other))));
+        assert_ne!(p, ExtendedPoint::from(other));
+    }
+}
+
+#[test]
+fn prime_order_excludes_identity_and_torsion() {
+    // (u=0, v=-1) has order two.
+    let torsion = ExtendedPoint::from(AffinePoint::from_raw_unchecked(
+        Fq::zero(),
+        -Fq::one(),
+    ));
+    let p = GENERATOR_EXTENDED * Fr::from(7u64);
+
+    for (point, prime_order) in [
+        (ExtendedPoint::identity(), false),
+        (torsion, false),
+        (p + torsion, false),
+        (p, true),
+    ] {
+        assert_eq!(bool::from(point.is_prime_order()), prime_order);
+        assert_eq!(
+            bool::from(AffinePoint::from(point).is_prime_order()),
+            prime_order
+        );
+    }
+}
+
+#[test]
+fn subgroup_and_mixed_operators_match_scalar_multiplication() {
+    let g = SubgroupPoint::generator();
+    let at = |scalar: Fr| ExtendedPoint::from(g) * scalar;
+    let (a, b) = (Fr::from(7u64), Fr::from(11u64));
+    let (p, q) = (g * a, g * b);
+    assert_eq!(ExtendedPoint::from(p), at(a));
+
+    let subgroup = [
+        (p + q, a + b),
+        (p - q, a - b),
+        (-p, -a),
+        (-&p, -a),
+        ([p, q].iter().sum(), a + b),
+        (
+            SubgroupPoint::conditional_select(&p, &q, Choice::from(0)),
+            a,
+        ),
+        (
+            SubgroupPoint::conditional_select(&p, &q, Choice::from(1)),
+            b,
+        ),
+    ];
+    for (point, scalar) in subgroup {
+        assert_eq!(ExtendedPoint::from(point), at(scalar));
+    }
+
+    let (extended, affine) = (at(a), AffinePoint::from(at(b)));
+    assert_eq!(extended + q, at(a + b));
+    assert_eq!(extended - q, at(a - b));
+    assert_eq!(extended + affine, at(a + b));
+    assert_eq!(extended - affine, at(a - b));
+    assert_eq!(affine * a, at(a * b));
+}
+
+#[test]
+fn group_generators() {
+    // The full group's generator has neither small nor prime order, and its
+    // cofactor multiple generates the prime-order subgroup.
+    let generator = ExtendedPoint::generator();
+    assert!(bool::from(generator.is_on_curve()));
+    assert!(!bool::from(generator.is_small_order()));
+    assert!(!bool::from(generator.is_torsion_free()));
+
+    let subgroup = ExtendedPoint::from(SubgroupPoint::generator());
+    assert!(bool::from(subgroup.is_prime_order()));
+    assert_eq!(subgroup, generator.mul_by_cofactor());
+}
+
+#[test]
+fn affine_group_encoding() {
+    let random = ExtendedPoint::random(XorShiftRng::from_seed([42; 16]));
+    for point in [
+        AffinePoint::identity(),
+        AffinePoint::from(GENERATOR_EXTENDED),
+        AffinePoint::from(random),
+    ] {
+        let bytes = <AffinePoint as GroupEncoding>::to_bytes(&point);
+        assert_eq!(bytes, point.to_bytes());
+        assert_eq!(
+            <AffinePoint as GroupEncoding>::from_bytes(&bytes).unwrap(),
+            point
+        );
+        assert_eq!(
+            <AffinePoint as GroupEncoding>::from_bytes_unchecked(&bytes)
+                .unwrap(),
+            point
+        );
+    }
+}
+
+/// The scalar whose internal Montgomery limbs are `limbs`, which must be below
+/// the modulus.
+fn from_montgomery_limbs(limbs: [u64; 4]) -> Fr {
+    let scalar = Fr::from_raw(limbs).reduce();
+    for (i, limb) in limbs.into_iter().enumerate() {
+        assert_eq!(scalar[i], limb);
+    }
+    scalar
+}
+
+#[test]
+fn scalar_equality_compares_every_limb() {
+    let base = [5, 6, 7, 8];
+    let scalar = from_montgomery_limbs(base);
+    for limb in 0..4 {
+        let mut limbs = base;
+        limbs[limb] += 1;
+        let other = from_montgomery_limbs(limbs);
+        assert!(!bool::from(scalar.ct_eq(&other)));
+        assert_ne!(scalar, other);
+    }
+    assert_eq!(scalar, from_montgomery_limbs(base));
+}
+
+#[test]
+fn scalar_negation_of_sparse_limbs() {
+    // Every nonzero pattern of zero and nonzero limbs.
+    for pattern in 1..16 {
+        let limbs: [u64; 4] = core::array::from_fn(|i| 5 * (pattern >> i & 1));
+        let scalar = from_montgomery_limbs(limbs);
+        assert_ne!(-scalar, Fr::zero());
+        assert_eq!(-scalar, Fr::zero() - scalar);
+        assert_eq!(scalar + -scalar, Fr::zero());
+    }
+    assert_eq!(-Fr::zero(), Fr::zero());
+}
+
+#[test]
+fn scalar_sum_and_product() {
+    let scalars = [Fr::from(3u64), Fr::from(5u64), -Fr::from(7u64)];
+    assert_eq!(scalars.iter().sum::<Fr>(), Fr::one());
+    assert_eq!(scalars.into_iter().product::<Fr>(), -Fr::from(105u64));
+    assert_eq!(core::iter::empty::<Fr>().sum::<Fr>(), Fr::zero());
+    assert_eq!(core::iter::empty::<Fr>().product::<Fr>(), Fr::one());
+}
+
+#[test]
+fn scalar_conversions_and_bits() {
+    use ff::PrimeField;
+
+    let scalar = -Fr::from(7u64);
+    assert_eq!(<[u8; 32]>::from(scalar), scalar.to_bytes());
+    assert_eq!(<[u8; 32]>::from(&scalar), scalar.to_bytes());
+    assert_eq!(Fr::NUM_BITS, 252);
+    assert_eq!(Fr::CAPACITY, 251);
+
+    #[cfg(feature = "bits")]
+    {
+        use ff::PrimeFieldBits;
+
+        let mut modulus = (-Fr::one()).to_bytes();
+        modulus[0] += 1; // The odd modulus's predecessor has an even low byte.
+        for (bits, bytes) in [
+            (scalar.to_le_bits(), scalar.to_bytes()),
+            (Fr::char_le_bits(), modulus),
+        ] {
+            for (i, bit) in bits.iter().enumerate() {
+                assert_eq!(*bit, bytes[i / 8] >> (i % 8) & 1 == 1, "bit {i}");
+            }
+        }
+    }
+}
+
+#[test]
+fn scalar_order_compares_limbs_most_significant_first() {
+    use core::cmp::Ordering;
+
+    let low = from_montgomery_limbs([6, 0, 0, 0]);
+    for (a, b, order) in [
+        (low, low, Ordering::Equal),
+        (from_montgomery_limbs([5, 0, 0, 0]), low, Ordering::Less),
+        (from_montgomery_limbs([0, 0, 0, 1]), low, Ordering::Greater),
+        (from_montgomery_limbs([7, 0, 0, 0]), low, Ordering::Greater),
+        // Each pair differs only in a middle limb.
+        (from_montgomery_limbs([6, 1, 0, 0]), low, Ordering::Greater),
+        (from_montgomery_limbs([6, 0, 1, 0]), low, Ordering::Greater),
+        // A middle limb outranks every less significant one.
+        (from_montgomery_limbs([0, 1, 0, 0]), low, Ordering::Greater),
+        (
+            from_montgomery_limbs([0, 0, 1, 0]),
+            from_montgomery_limbs([6, 5, 0, 0]),
+            Ordering::Greater,
+        ),
+    ] {
+        assert_eq!(a.cmp(&b), order);
+        assert_eq!(b.cmp(&a), order.reverse());
+        assert_eq!(a.partial_cmp(&b), Some(order));
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn wnaf_with_recommended_windows() {
+    let scalar = Fr::hash_to_scalar(None, b"wnaf");
+    let expected = GENERATOR_EXTENDED * scalar;
+    for num_scalars in [1, 2, 64, 4096] {
+        let mut wnaf = group::Wnaf::new();
+        let point = wnaf.base(GENERATOR_EXTENDED, num_scalars).scalar(&scalar);
+        assert_eq!(point, expected, "{num_scalars} scalars");
     }
 }
